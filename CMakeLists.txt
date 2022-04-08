@@ -34,8 +34,9 @@ message(STATUS "Boost version: ${Boost_VERSION}")
 
 include_directories(include)
 
-# TODO(!): Update name and srcs
-# add_library(example_lib src/example_lib.cc)
+add_library(session_lib src/session.cc)
+add_library(server_lib src/server.cc)
+target_link_libraries(server_lib session_lib)
 
 # Include -pthread when compiling
 # https://stackoverflow.com/questions/5395309/how-do-i-force-cmake-to-include-pthread-option-during-compilation
@@ -44,7 +45,7 @@ set(THREADS_PREFER_PTHREAD_FLAG TRUE)
 find_package(Threads REQUIRED)
 
 add_executable(server src/server_main.cc)
-target_link_libraries(server Boost::system Threads::Threads)
+target_link_libraries(server session_lib server_lib Boost::system Threads::Threads)
 
 # TODO(!): Update test executable name, srcs, and deps
 # add_executable(example_lib_test tests/example_lib_test.cc)

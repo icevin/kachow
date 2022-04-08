@@ -16,16 +16,21 @@ RUN ctest --output-on_failure
 # Define deploy stage
 FROM ubuntu:focal as deploy
 
-# TODO(!): Copy server output binary to "."
-# COPY --from=builder /usr/src/project/build/bin/example_server .
+# Copy server output binary to "."
+# TODO(nidhipanchal): update path based on names used
+COPY --from=builder /usr/src/project/build/bin/server .
 
-# TODO(!): Expose some port(s)
-# EXPOSE 80
+# Copy config files
+# TODO(nidhipanchal): check if this works or if it needs to be in the same format as prev command
+COPY conf/* conf/
+
+# Expose some port(s)
+EXPOSE 80
 
 # Use ENTRYPOINT to specify the binary name
-# TODO(!): Update with real server name
-# ENTRYPOINT ["./example_server"]
+# TODO(nidhipanchal): Update with real server name
+ENTRYPOINT ["./server"]
 
 # Use CMD to specify arguments to ENTRYPOINT
-# TODO(!): Update with real server args
-# CMD [""]
+# TODO(nidhipanchal): Update with real conf name
+CMD ["conf/deploy.conf"]

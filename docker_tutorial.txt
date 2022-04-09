@@ -1,0 +1,6 @@
+To run server:
+1. Tag base image: docker build -f docker/base.Dockerfile -t base_image .
+2. Tag container image: docker build -f docker/Dockerfile -t ass2 .
+3. Run server: docker run --rm -p 80:80 --name ass2_run ass2:latest
+4. To stop server, open a new terminal and run: docker container stop ass2_run
+5. If you want to test, run something like: curl -v localhost

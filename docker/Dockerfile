@@ -1,7 +1,7 @@
 ### Build/test container ###
 # Define builder stage
-#FROM kachow:base as builder
-FROM base_image as builder
+FROM kachow:base as builder
+#FROM base_image as builder
 
 # Share work directory
 COPY . /usr/src/project

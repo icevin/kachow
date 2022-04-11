@@ -31,22 +31,18 @@ void session::handle_read(const boost::system::error_code& error,
   {
     if (!error)
     {
-      // get content-length
-      std::string s = std::to_string(bytes_transferred);
-      const char * cl = s.c_str();
-      size_t num_digits = s.length();
+      std::stringstream ss;
 
-      // add header field to echo response
-      char response[max_length + header_length + num_digits];
-      strcpy(response, "HTTP/1.1 200 OK\r\n");
-      strcat(response, "Content-Type: text/plain\r\n");
-      strcat(response, "Content-Length: ");
-      strcat(response, cl);
-      strcat(response, "\r\n\r\n");
-      strcat(response, data_);
+      ss << "HTTP/1.1 200 OK\r\n";
+      ss << "Content-Type: text/plain\r\n";
+      ss << "Content-Length: " << std::to_string(bytes_transferred) << "\r\n";
+      ss << "\r\n\r\n";
+      ss << data_;
+
+      std::string re = ss.str(); 
 
       boost::asio::async_write(socket_,
-          boost::asio::buffer(response, bytes_transferred + header_length + num_digits),
+          boost::asio::buffer(re, re.length()),
           boost::bind(&session::handle_write, this,
             boost::asio::placeholders::error));
     }

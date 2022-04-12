@@ -12,7 +12,7 @@ using boost::asio::ip::tcp;
 class server
 {
 public:
-  server(boost::asio::io_service& io_service, short port);
+  server(boost::asio::io_service& io_service, int port);
 
 private:
   void start_accept();

@@ -32,12 +32,15 @@ void session::handle_read(const boost::system::error_code& error,
     if (!error)
     {
       std::stringstream ss;
+      std::string sub(data_);
+      sub = sub.substr(0, bytes_transferred);
+      ss.str("");
 
       ss << "HTTP/1.1 200 OK\r\n";
       ss << "Content-Type: text/plain\r\n";
       ss << "Content-Length: " << std::to_string(bytes_transferred) << "\r\n";
-      ss << "\r\n\r\n";
-      ss << data_;
+      ss << "\r\n";
+      ss << sub;
 
       std::string re = ss.str(); 
 

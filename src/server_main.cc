@@ -25,7 +25,7 @@ int main(int argc, char* argv[])
   {
     if (argc != 2)
     {
-      std::cerr << "Usage: async_tcp_echo_server <my_config>\n";
+      std::cerr << "Usage: ./server <my_config>\n";
       return 1;
     }
 

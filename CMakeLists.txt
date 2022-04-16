@@ -58,6 +58,9 @@ target_link_libraries(server_test session_lib server_lib config_parser_lib Boost
 # target_link_libraries(example_lib_test example_lib gtest_main)
 
 # TODO(!): Update with test binary
+add_test(NAME integration_test
+    COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/tests/integration_test.sh
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
 gtest_discover_tests(config_parser_test WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/tests)
 gtest_discover_tests(server_test WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/tests)
 # gtest_discover_tests(example_lib_test WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/tests)

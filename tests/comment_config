@@ -1,0 +1,7 @@
+# server comment
+
+server {
+  listen   8080;
+}
+
+# ending comment #

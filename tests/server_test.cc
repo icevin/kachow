@@ -10,7 +10,9 @@ class ServerTest : public ::testing::Test {
   }
 
   boost::asio::io_service io;
-  int port = 80;
+
+  // Avoid port 80 for testing
+  int port = 8080;
   server s = server(io, port);
 };
 

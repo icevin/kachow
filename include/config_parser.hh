@@ -7,6 +7,7 @@
 
 class NginxConfig;
 
+
 // The parsed representation of a single config statement.
 class NginxConfigStatement {
  public:
@@ -28,13 +29,6 @@ class NginxConfigParser {
  public:
   NginxConfigParser() {}
 
-  // Take a opened config file or file name (respectively) and store the
-  // parsed config in the provided NginxConfig out-param.  Returns true
-  // iff the input config file is valid.
-  bool Parse(std::istream* config_file, NginxConfig* config);
-  bool Parse(const char* file_name, NginxConfig* config);
-
- private:
   enum TokenType {
     TOKEN_TYPE_START = 0,
     TOKEN_TYPE_NORMAL = 1,
@@ -45,6 +39,15 @@ class NginxConfigParser {
     TOKEN_TYPE_EOF = 6,
     TOKEN_TYPE_ERROR = 7
   };
+
+  // Take a opened config file or file name (respectively) and store the
+  // parsed config in the provided NginxConfig out-param.  Returns true
+  // iff the input config file is valid.
+  bool Parse(std::istream* config_file, NginxConfig* config);
+  bool Parse(const char* file_name, NginxConfig* config);
+
+  TokenType test_parse_token(std::string input, std::string* value);
+ private:
   const char* TokenTypeAsString(TokenType type);
 
   enum TokenParserState {

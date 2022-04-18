@@ -18,15 +18,16 @@ tcp::socket& session::socket()
     return socket_;
   }
 
-void session::start()
+int session::start()
   {
     socket_.async_read_some(boost::asio::buffer(data_, max_length),
         boost::bind(&session::handle_read, this,
           boost::asio::placeholders::error,
           boost::asio::placeholders::bytes_transferred));
+    return 1;
   }
 
-void session::handle_read(const boost::system::error_code& error,
+int session::handle_read(const boost::system::error_code& error,
       size_t bytes_transferred)
   {
     if (!error)
@@ -48,14 +49,16 @@ void session::handle_read(const boost::system::error_code& error,
           boost::asio::buffer(re, re.length()),
           boost::bind(&session::handle_write, this,
             boost::asio::placeholders::error));
+      return 1;
     }
     else
     {
       delete this;
+      return -1;
     }
   }
 
-void session::handle_write(const boost::system::error_code& error)
+int session::handle_write(const boost::system::error_code& error)
   {
     if (!error)
     {
@@ -63,10 +66,24 @@ void session::handle_write(const boost::system::error_code& error)
           boost::bind(&session::handle_read, this,
             boost::asio::placeholders::error,
             boost::asio::placeholders::bytes_transferred));
+      return 1;
     }
     else
     {
       delete this;
+      return -1;
     }
   }
   
+int session::test_start() {
+  return start();
+}
+
+int session::test_handle_read(const boost::system::error_code& error,
+      size_t bytes_transferred) {
+        return handle_read(error, bytes_transferred);
+      }
+
+int session::test_handle_write(const boost::system::error_code& error) {
+  return handle_write(error);
+}

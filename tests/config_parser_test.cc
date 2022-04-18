@@ -17,6 +17,12 @@ TEST_F(NginxConfigParserTest, ValidPortNumber) {
   EXPECT_EQ(out_config.portNumber(), 80);
 }
 
+TEST_F(NginxConfigParserTest, ValidPortNumberAndComment) {
+  bool success = parser.Parse("comment_config", &out_config);
+  EXPECT_TRUE(success);
+  EXPECT_EQ(out_config.portNumber(), 8080);
+}
+
 TEST_F(NginxConfigParserTest, InvalidPortNumber) {
   bool success = parser.Parse("invalid_config", &out_config);
   EXPECT_FALSE(success);
@@ -47,10 +53,22 @@ TEST_F(NginxConfigParserTest, MatchedDoubleQuoteConfig) {
   EXPECT_EQ(out_config.portNumber(), 80);
 }
 
+TEST_F(NginxConfigParserTest, MatchedDoubleQuoteInvalidFollowing) {
+  bool success = parser.Parse("matched_dquote_invalid_following", &out_config);
+  EXPECT_FALSE(success);
+  EXPECT_EQ(out_config.portNumber(), -1);
+}
+
 TEST_F(NginxConfigParserTest, MatchedSingleQuoteConfig) {
   bool success = parser.Parse("matched_squote_config", &out_config);
   EXPECT_TRUE(success);
   EXPECT_EQ(out_config.portNumber(), 80);
+}
+
+TEST_F(NginxConfigParserTest, MatchedSingleQuoteInvalidFollowing) {
+  bool success = parser.Parse("matched_squote_invalid_following", &out_config);
+  EXPECT_FALSE(success);
+  EXPECT_EQ(out_config.portNumber(), -1);
 }
 
 // " with '
@@ -81,4 +99,22 @@ TEST_F(NginxConfigParserTest, ExtraBracesConfig) {
 TEST_F(NginxConfigParserTest, FalseFileConfig) {
   bool success = parser.Parse("config", &out_config);
   EXPECT_FALSE(success);
+}
+
+TEST_F(NginxConfigParserTest, ConfigStatementToStringTestDepth0) {
+  std::istringstream test("server {\nlisten   80;\n}");
+  std::istream& input(test);
+  bool success = parser.Parse(&input, &out_config);
+  std::string expected_output_0 = "server {\n  listen 80;\n}\n";
+  EXPECT_EQ(out_config.ToString(0), expected_output_0);
+  EXPECT_TRUE(success);
+}
+
+TEST_F(NginxConfigParserTest, ConfigStatementToStringTestDepth1) {
+  std::istringstream test("server {\nlisten   80;\n}");
+  std::istream& input(test);
+  bool success = parser.Parse(&input, &out_config);
+  std::string expected_output_1 = "  server {\n    listen 80;\n  }\n";
+  EXPECT_EQ(out_config.ToString(1), expected_output_1);
+  EXPECT_TRUE(success);
 }

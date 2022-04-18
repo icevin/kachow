@@ -14,13 +14,18 @@ public:
 
   tcp::socket& socket();
 
-  void start();
+  int start();
+
+  int test_start();
+  int test_handle_read(const boost::system::error_code& error,
+      size_t bytes_transferred);
+  int test_handle_write(const boost::system::error_code& error);
 
 private:
-  void handle_read(const boost::system::error_code& error,
+  int handle_read(const boost::system::error_code& error,
       size_t bytes_transferred);
 
-  void handle_write(const boost::system::error_code& error);
+  int handle_write(const boost::system::error_code& error);
 
   tcp::socket socket_;
   enum { max_length = 1024, header_length = 63 };

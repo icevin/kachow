@@ -1,4 +1,5 @@
 #include "session.hh"
+#include "request_handler.hh"
 
 #include <cstdlib>
 #include <iostream>
@@ -32,18 +33,11 @@ int session::handle_read(const boost::system::error_code& error,
   {
     if (!error)
     {
-      std::stringstream ss;
       std::string sub(data_);
       sub = sub.substr(0, bytes_transferred);
-      ss.str("");
 
-      ss << "HTTP/1.1 200 OK\r\n";
-      ss << "Content-Type: text/plain\r\n";
-      ss << "Content-Length: " << std::to_string(bytes_transferred) << "\r\n";
-      ss << "\r\n";
-      ss << sub;
-
-      std::string re = ss.str(); 
+      RequestHandler* handler = new RequestHandlerEcho();
+      std::string re = handler->get_response(sub);
 
       boost::asio::async_write(socket_,
           boost::asio::buffer(re, re.length()),

@@ -29,7 +29,7 @@ add_subdirectory(/usr/src/googletest googletest)
 # Enable Boost
 # Use static libraries so binaries can be deployed without a full boost install
 set(Boost_USE_STATIC_LIBS ON)
-find_package(Boost 1.50 REQUIRED COMPONENTS system log)
+find_package(Boost 1.50 REQUIRED COMPONENTS system log_setup log)
 message(STATUS "Boost version: ${Boost_VERSION}")
 
 include_directories(include)
@@ -38,7 +38,7 @@ add_library(session_lib src/session.cc)
 add_library(server_lib src/server.cc)
 add_library(config_parser_lib src/config_parser.cc)
 add_library(request_handler_lib src/request_handler.cc)
-target_link_libraries(server_lib session_lib config_parser_lib request_handler_lib)
+target_link_libraries(server_lib session_lib config_parser_lib request_handler_lib Boost::log)
 
 # Include -pthread when compiling
 # https://stackoverflow.com/questions/5395309/how-do-i-force-cmake-to-include-pthread-option-during-compilation
@@ -47,7 +47,7 @@ set(THREADS_PREFER_PTHREAD_FLAG TRUE)
 find_package(Threads REQUIRED)
 
 add_executable(server src/server_main.cc)
-target_link_libraries(server session_lib server_lib config_parser_lib Boost::system Boost::log Threads::Threads)
+target_link_libraries(server session_lib server_lib config_parser_lib Boost::system Boost::log_setup Boost::log Threads::Threads)
 
 # TODO(!): Update test executable name, srcs, and deps
 add_executable(config_parser_test tests/config_parser_test.cc)

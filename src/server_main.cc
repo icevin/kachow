@@ -12,27 +12,45 @@
 #include "server.hh"
 #include "config_parser.hh"
 
+#include <csignal>
 #include <cstdlib>
 #include <iostream>
 #include <boost/bind.hpp>
 #include <boost/asio.hpp>
+#include <boost/log/trivial.hpp>
 
 using boost::asio::ip::tcp;
 
+void signal_handler (int signal_num) {
+  BOOST_LOG_TRIVIAL(info) << "Termination signal received";
+  BOOST_LOG_TRIVIAL(info) << "Shutting down server";
+  exit(signal_num);
+}
+
 int main(int argc, char* argv[])
 {
+  signal(SIGINT, signal_handler);
+
   try
   {
+    BOOST_LOG_TRIVIAL(info) << "Starting up server";
+
     if (argc != 2)
     {
       std::cerr << "Usage: ./server <my_config>\n";
+      BOOST_LOG_TRIVIAL(fatal) << "Config file not found";
       return 1;
     }
 
     // Parse config file
+    BOOST_LOG_TRIVIAL(info) << "Attempting to parse config file";
     NginxConfigParser config_parser;
     NginxConfig config;
-    config_parser.Parse(argv[1], &config);
+    if (!config_parser.Parse(argv[1], &config)) {
+      BOOST_LOG_TRIVIAL(fatal) << "Unable to parse config file";
+      return 1;
+    }
+    BOOST_LOG_TRIVIAL(info) << "Successfully parsed config file";
 
     boost::asio::io_service io_service;
 
@@ -42,9 +60,12 @@ int main(int argc, char* argv[])
     int portNumber = config.portNumber();
     if (portNumber == -1) {
       std::cerr << "Port number not found in config file\n";
+      BOOST_LOG_TRIVIAL(fatal) << "Port number not found in config file";
       return 1;
     }
+    BOOST_LOG_TRIVIAL(info) << "Attempting to start server on port " << portNumber;
     server s(io_service, portNumber);
+    BOOST_LOG_TRIVIAL(info) << "Successfully started server on port " << portNumber;
 
     io_service.run();
   }

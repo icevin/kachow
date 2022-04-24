@@ -29,7 +29,7 @@ add_subdirectory(/usr/src/googletest googletest)
 # Enable Boost
 # Use static libraries so binaries can be deployed without a full boost install
 set(Boost_USE_STATIC_LIBS ON)
-find_package(Boost 1.50 REQUIRED COMPONENTS system)
+find_package(Boost 1.50 REQUIRED COMPONENTS system log)
 message(STATUS "Boost version: ${Boost_VERSION}")
 
 include_directories(include)
@@ -46,7 +46,7 @@ set(THREADS_PREFER_PTHREAD_FLAG TRUE)
 find_package(Threads REQUIRED)
 
 add_executable(server src/server_main.cc)
-target_link_libraries(server session_lib server_lib config_parser_lib Boost::system Threads::Threads)
+target_link_libraries(server session_lib server_lib config_parser_lib Boost::system Boost::log Threads::Threads)
 
 # TODO(!): Update test executable name, srcs, and deps
 add_executable(config_parser_test tests/config_parser_test.cc)

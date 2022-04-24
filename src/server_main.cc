@@ -15,31 +15,11 @@
 #include <csignal>
 #include <cstdlib>
 #include <iostream>
-#include <boost/asio.hpp>
 #include <boost/bind.hpp>
-#include <boost/log/sinks/text_file_backend.hpp>
+#include <boost/asio.hpp>
 #include <boost/log/trivial.hpp>
-#include <boost/log/utility/setup/common_attributes.hpp>
-#include <boost/log/utility/setup/console.hpp>
-#include <boost/log/utility/setup/file.hpp>
-
-namespace logging = boost::log;
-namespace sinks = boost::log::sinks;
-namespace keywords = boost::log::keywords;
 
 using boost::asio::ip::tcp;
-
-void init()
-{
-    logging::add_console_log(std::cout, keywords::format = "[%TimeStamp%] [%ThreadID%] [%Severity%]: %Message%");
-    logging::add_file_log
-    (
-        keywords::file_name = "../log/server_%N.log",
-        keywords::rotation_size = 10 * 1024 * 1024,
-        keywords::time_based_rotation = sinks::file::rotation_at_time_point(0, 0, 0),
-        keywords::format = "[%TimeStamp%] [%ThreadID%] [%Severity%]: %Message%"
-    );
-}
 
 void signal_handler (int signal_num) {
   BOOST_LOG_TRIVIAL(info) << "Termination signal received";
@@ -49,9 +29,6 @@ void signal_handler (int signal_num) {
 
 int main(int argc, char* argv[])
 {
-  init();
-  logging::add_common_attributes();
-
   signal(SIGINT, signal_handler);
 
   try

@@ -1,13 +1,11 @@
 #include "session.hh"
 #include "request_handler.hh"
 
-#include <algorithm>
 #include <cstdlib>
 #include <iostream>
 #include <string>
-#include <boost/asio.hpp>
 #include <boost/bind.hpp>
-#include <boost/log/trivial.hpp>
+#include <boost/asio.hpp>
 
 using boost::asio::ip::tcp;
 
@@ -38,13 +36,6 @@ int session::handle_read(const boost::system::error_code& error,
       std::string sub(data_);
       sub = sub.substr(0, bytes_transferred);
 
-      std::size_t first_cr = sub.find('\r');
-      std::size_t first_lf = sub.find('\n');
-      std::size_t header_end = std::min(first_cr, first_lf);
-
-      BOOST_LOG_TRIVIAL(info) << sub.substr(0, header_end) << " (" 
-        << socket_.remote_endpoint().address().to_string() << ")";
-      
       RequestHandler* handler = new RequestHandlerEcho();
       std::string re = handler->get_response(sub);
 

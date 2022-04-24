@@ -1,7 +1,6 @@
-#include "request_handler.hh"
-
-#include <sstream>
 #include <string>
+#include <sstream>
+#include "request_handler.hh"
 
 std::string RequestHandlerEcho::get_response(std::string request_str) { 
   std::stringstream ss;

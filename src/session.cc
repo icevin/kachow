@@ -1,5 +1,4 @@
 #include "session.hh"
-#include "request_handler.hh"
 
 #include <algorithm>
 #include <cstdlib>
@@ -8,12 +7,14 @@
 #include <boost/asio.hpp>
 #include <boost/bind.hpp>
 #include <boost/log/trivial.hpp>
+#include <regex>
 
 using boost::asio::ip::tcp;
 
-session::session(boost::asio::io_service& io_service)
+session::session(boost::asio::io_service& io_service, std::vector<std::vector<std::string>> handler_statements)
     : socket_(io_service)
   {
+    handler_statements_ = handler_statements;
   }
 
 tcp::socket& session::socket()
@@ -47,8 +48,36 @@ int session::handle_read(const boost::system::error_code& error,
           << socket_.remote_endpoint().address().to_string() << ")";
       }
       
-      RequestHandler* handler = new RequestHandlerStatic("static");
-      this->resp = handler->get_response(sub);
+      // Choose the appropriate RequestHandler based on the handler_statements_ object
+      std::string request_str = sub;
+      RequestHandler* handler = NULL;
+      for (const std::vector<std::string> statement : handler_statements_)
+      {
+        // check for matching url prefix
+        std::string prefix = statement[1];
+        if (session::url_prefix_matches(request_str, prefix))
+        {
+          if (statement[0] == "echo") {
+            handler = new RequestHandlerEcho();
+            BOOST_LOG_TRIVIAL(info) << "RequestHandlerEcho chosen\n";
+          }
+          else if (statement[0] == "static_serve") {
+            // MODIFY HERE LATER TO ADD SUPPORT FOR RequestHandlerStaticServe
+            handler = new RequestHandlerStatic(statement[2], prefix.length());
+            BOOST_LOG_TRIVIAL(info) << "RequestHandlerStatic chosen\n";
+          }
+          else {
+            BOOST_LOG_TRIVIAL(fatal) << "unrecognized request handler type: " << statement[0] << "\n"
+            << "only 'echo' and 'static_serve' are supported\n";
+          }
+        }
+      }
+      if (handler == NULL)
+        this->resp = "HTTP/1.1 400 Bad Request \r\n";
+      else {
+        this->resp = handler->get_response(sub);
+      }
+      BOOST_LOG_TRIVIAL(info) << "Response generated: [" << this->resp << "]\n\n";
 
       boost::asio::async_write(socket_,
           boost::asio::buffer(this->resp, this->resp.length()),
@@ -91,4 +120,17 @@ int session::test_handle_read(const boost::system::error_code& error,
 
 int session::test_handle_write(const boost::system::error_code& error) {
   return handle_write(error);
+}
+
+bool session::url_prefix_matches(const std::string request_str, const std::string url_prefix)
+{
+    std::regex rgx("GET (.+) HTTP");
+
+    std::smatch matches;
+    std::regex_search(request_str, matches, rgx);
+    std::string url_string = matches[1].str();
+
+    std::string sub_url = url_string.substr(0, url_prefix.length());
+    std::cout << "sub_url: " << sub_url << "\n";
+    return (sub_url == url_prefix);
 }

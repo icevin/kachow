@@ -1,7 +1,7 @@
 server {
   listen   80;
   request_handlers {
-    static_serve /static static;
+    static_serve /static .;
     echo /echo;
   }
 }

@@ -11,7 +11,7 @@ class StaticTest : public ::testing::Test {
   RequestHandlerStatic* a;
 
   void SetUp() override {
-    a = new RequestHandlerStatic(".");
+    a = new RequestHandlerStatic(".", 0);
   }
 
   void TearDown() override {

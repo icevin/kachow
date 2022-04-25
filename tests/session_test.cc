@@ -11,7 +11,8 @@ class SessionTest : public ::testing::Test {
   session* s;
 
   void SetUp() override {
-    s = new session(io);
+    std::vector<std::vector<std::string>> handler_statements;
+    s = new session(io, handler_statements);
   }
 
 };
@@ -49,4 +50,28 @@ TEST_F(SessionTest, FailedHandleWrite) {
   int rc = s->test_handle_write(boost::system::errc::make_error_code(boost::system::errc::not_supported));
 
   EXPECT_EQ(rc, -1);
+}
+
+TEST_F(SessionTest, PrefixMatcherTrueWhenNeeded) {
+  std::string request = "GET /echo/stuff HTTP/1.1";
+  std::string prefix = "/echo";
+  bool result = s->url_prefix_matches(request, prefix);
+  std::cout << "PrefixMatcherTrueWhenNeeded result: " << result << "\n";
+  EXPECT_TRUE(result);
+}
+
+TEST_F(SessionTest, PrefixMatcherFalseWhenNeeded) {
+  std::string request = "GET /static/stuff HTTP/1.1";
+  std::string prefix = "/echo";
+  int result = s->url_prefix_matches(request, prefix);
+  std::cout << "PrefixMatcherFalseWhenNeeded result: " << result << "\n";
+  EXPECT_FALSE(result);
+}
+
+TEST_F(SessionTest, PrefixMatcherTrueWhenSlash) {
+  std::string request = "GET /foo/bar HTTP/1.1";
+  std::string prefix = "/";
+  int result = s->url_prefix_matches(request, prefix);
+  std::cout << "PrefixMatcherTrueWhenSlash result: " << result << "\n";
+  EXPECT_TRUE(result);
 }

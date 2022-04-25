@@ -14,8 +14,9 @@ class RequestHandlerEcho : public RequestHandler {
 
 class RequestHandlerStatic : public RequestHandler {
   public:
-    RequestHandlerStatic(std::string serve_path) : base_path(serve_path) {};
+    RequestHandlerStatic(std::string serve_path, int prefix_length) : base_path(serve_path), prefix_length_{prefix_length} {};
     std::string get_response(std::string request_str);
   private:
     boost::filesystem::path base_path;
+    int prefix_length_;
 };

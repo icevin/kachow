@@ -1,5 +1,6 @@
 #include "gtest/gtest.h"
 #include "config_parser.hh"
+#include <vector>
 
 class NginxConfigParserTest : public ::testing::Test {
  protected:
@@ -117,4 +118,15 @@ TEST_F(NginxConfigParserTest, ConfigStatementToStringTestDepth1) {
   std::string expected_output_1 = "  server {\n    listen 80;\n  }\n";
   EXPECT_EQ(out_config.ToString(1), expected_output_1);
   EXPECT_TRUE(success);
+}
+
+TEST_F(NginxConfigParserTest, RequestHandlerStatements) {
+  bool success = parser.Parse("request_handlers_config", &out_config);
+  EXPECT_TRUE(success);
+  std::vector<std::vector<std::string>> handler_statements = out_config.getRequestHandlerStatements();
+  EXPECT_EQ(handler_statements[0][0], "static_serve");
+  EXPECT_EQ(handler_statements[0][1], "/static");
+  EXPECT_EQ(handler_statements[0][2], ".");
+  EXPECT_EQ(handler_statements[1][0], "echo");
+  EXPECT_EQ(handler_statements[1][1], "/echo");
 }

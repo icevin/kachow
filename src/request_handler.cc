@@ -5,6 +5,9 @@
 #include <iostream>
 #include <sstream>
 #include <string>
+RequestHandlerEcho::RequestHandlerEcho(){
+  
+}
 
 #include "mime.hh"
 
@@ -41,7 +44,7 @@ std::string RequestHandlerStatic::get_response(std::string request_str) {
         content_length = std::to_string(response_body.size());
         content_type   = "text/html";
     } else {
-        request_path = request_str.substr(GET_INDEX + 4, HTTP_INDEX - GET_INDEX - 4);
+        request_path = request_str.substr(GET_INDEX + 4 + prefix_length_, HTTP_INDEX - GET_INDEX - 4 - prefix_length_);
         BOOST_LOG_TRIVIAL(info) << "Received static request for " << request_path;
         boost::filesystem::path full_path = base_path;
         full_path /= request_path;

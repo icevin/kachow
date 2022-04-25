@@ -13,7 +13,12 @@ class ServerTest : public ::testing::Test {
 
   // Avoid port 80 for testing
   int port = 8080;
-  server s = server(io, port);
+  std::vector<std::vector<std::string>> handler_statements;
+  //std::vector<std::string> handler_statement;
+  //handler_statement.push_back("echo");
+  //handler_statement.push_back("/");
+  //handler_statements.push_back(handler_statement);
+  server s = server(io, port, handler_statements);
 };
 
 TEST_F(ServerTest, SuccessfulStartAccept) {
@@ -23,7 +28,7 @@ TEST_F(ServerTest, SuccessfulStartAccept) {
 
 TEST_F(ServerTest, SuccessfulHandleAccept) {
   boost::asio::io_service serv;
-  session* sess = new session(serv);
+  session* sess = new session(serv, handler_statements);
   int success = s.test_handle_accept(sess, boost::system::error_code());
 
   if (sess)
@@ -33,7 +38,7 @@ TEST_F(ServerTest, SuccessfulHandleAccept) {
 
 TEST_F(ServerTest, FailedHandleAccept) {
   boost::asio::io_service serv;
-  session* sess = new session(serv);
+  session* sess = new session(serv, handler_statements);
   int success = s.test_handle_accept(sess,
     boost::system::errc::make_error_code(boost::system::errc::not_supported));
 

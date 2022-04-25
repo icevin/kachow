@@ -1,4 +1,5 @@
 #pragma once
+#include "request_handler.hh"
 
 #include <cstdlib>
 #include <iostream>
@@ -10,7 +11,7 @@ using boost::asio::ip::tcp;
 class session
 {
 public:
-  session(boost::asio::io_service& io_service);
+  session(boost::asio::io_service& io_service, std::vector<std::vector<std::string>> handler_statements);
 
   tcp::socket& socket();
 
@@ -20,6 +21,7 @@ public:
   int test_handle_read(const boost::system::error_code& error,
       size_t bytes_transferred);
   int test_handle_write(const boost::system::error_code& error);
+  bool url_prefix_matches(const std::string request_str, const std::string url_prefix); // PURE FUNCTION (move to utils)
 
 private:
   int handle_read(const boost::system::error_code& error,
@@ -31,4 +33,5 @@ private:
   enum { max_length = 1024, header_length = 63 };
   char data_[max_length];
   std::string resp;
+  std::vector<std::vector<std::string>> handler_statements_;
 };

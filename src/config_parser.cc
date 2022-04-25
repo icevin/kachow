@@ -63,6 +63,30 @@ int NginxConfig::portNumber() {
     return -1;
 }
 
+std::vector<std::vector<std::string>> NginxConfig::getRequestHandlerStatements() {
+    for (const auto& statement : statements_) {
+        if (statement->tokens_[0] == "server") {
+            for (const auto& sub_statement : statement->child_block_->statements_) {
+                if (sub_statement->tokens_[0] == "request_handlers") {
+                    std::vector<std::vector<std::string>> outer_vector;
+                    for (const auto& inner_statement : sub_statement->child_block_->statements_)
+                    {
+                      std::vector<std::string> sub_vector;
+                      for (const auto token : inner_statement->tokens_)
+                      {
+                        sub_vector.push_back(token);
+                      }
+                      outer_vector.push_back(sub_vector);
+                    }
+                    return outer_vector;
+                }
+            }
+        }
+    }
+    std::vector<std::vector<std::string>> empty;
+    return empty;
+}
+
 const char* NginxConfigParser::TokenTypeAsString(TokenType type) {
   switch (type) {
     case TOKEN_TYPE_START:         return "TOKEN_TYPE_START";

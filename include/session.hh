@@ -30,4 +30,5 @@ private:
   tcp::socket socket_;
   enum { max_length = 1024, header_length = 63 };
   char data_[max_length];
+  std::string resp;
 };

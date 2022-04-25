@@ -47,11 +47,11 @@ int session::handle_read(const boost::system::error_code& error,
           << socket_.remote_endpoint().address().to_string() << ")";
       }
       
-      RequestHandler* handler = new RequestHandlerEcho();
-      std::string re = handler->get_response(sub);
+      RequestHandler* handler = new RequestHandlerStatic("static");
+      this->resp = handler->get_response(sub);
 
       boost::asio::async_write(socket_,
-          boost::asio::buffer(re, re.length()),
+          boost::asio::buffer(this->resp, this->resp.length()),
           boost::bind(&session::handle_write, this,
             boost::asio::placeholders::error));
       return 1;

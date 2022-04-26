@@ -1,5 +1,1 @@
-GET / HTTP/1.1
-Host: 127.0.0.1
-User-Agent: curl/7.68.0
-Accept: */*
-
+<html><h1>404 Not Found</h1></html>

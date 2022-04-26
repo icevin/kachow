@@ -23,6 +23,9 @@ COPY --from=builder /usr/src/project/build/bin/server .
 # Copy config files
 COPY conf/* conf/
 
+# Copy static directory
+COPY static/* static/
+
 # Expose some port(s)
 EXPOSE 80
 

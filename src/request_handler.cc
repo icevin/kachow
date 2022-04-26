@@ -12,6 +12,8 @@ RequestHandlerEcho::RequestHandlerEcho(){
 #include "mime.hh"
 
 std::string RequestHandlerEcho::get_response(std::string request_str) {
+    BOOST_LOG_TRIVIAL(info) << "Received Echo Request";
+
     std::stringstream ss;
     ss.str("");
 
@@ -21,6 +23,7 @@ std::string RequestHandlerEcho::get_response(std::string request_str) {
     ss << "\r\n";
     ss << request_str;
 
+    BOOST_LOG_TRIVIAL(info) << "Created Response: 200 OK";
     return ss.str();
 }
 
@@ -38,22 +41,22 @@ std::string RequestHandlerStatic::get_response(std::string request_str) {
     std::string request_path;
 
     if (GET_INDEX == std::string::npos || HTTP_INDEX == std::string::npos) {
+        BOOST_LOG_TRIVIAL(error) << "Received Malformed Request";
         status_code   = "400 Bad Request";
         response_body = "<html><h1>400 Bad Request</h1></html>";
-        BOOST_LOG_TRIVIAL(info) << "Received Malformed Request";
         content_length = std::to_string(response_body.size());
         content_type   = "text/html";
     } else {
         request_path = request_str.substr(GET_INDEX + 4 + prefix_length_, HTTP_INDEX - GET_INDEX - 4 - prefix_length_);
-        BOOST_LOG_TRIVIAL(info) << "Received static request for " << request_path;
+        BOOST_LOG_TRIVIAL(info) << "Received Static Request: " << request_path;
         boost::filesystem::path full_path = base_path;
         full_path /= request_path;
         if (!boost::filesystem::exists(full_path) || !boost::filesystem::is_regular_file(full_path)) {
+            BOOST_LOG_TRIVIAL(error) << "404 Not Found: " << full_path.string();
             status_code    = "404 Not Found";
             response_body  = "<html><h1>404 Not Found</h1></html>";
             content_length = std::to_string(response_body.size());
             content_type   = "text/html";
-            BOOST_LOG_TRIVIAL(info) << "404 Not Found: " << full_path.string();
         } else {
             content_type = extensionToMIME(full_path.extension().string());
             std::ostringstream buf;
@@ -74,5 +77,6 @@ std::string RequestHandlerStatic::get_response(std::string request_str) {
     // Send body if applicable
     if (response_body != "") ss << response_body;
 
+    BOOST_LOG_TRIVIAL(info) << "Created Response: " << status_code;
     return ss.str();
 }

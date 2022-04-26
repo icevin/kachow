@@ -31,16 +31,22 @@ using boost::asio::ip::tcp;
 
 void init()
 {
+    // enable logging to console
     logging::add_console_log(std::cout, keywords::format = "[%TimeStamp%] [%ThreadID%] [%Severity%]: %Message%");
+    
+    // enable logging to file
     logging::add_file_log
     (
         keywords::file_name = "../log/server_%N.log",
+        // rotate when log reaches 10 MB
         keywords::rotation_size = 10 * 1024 * 1024,
+        // rotate daily at 00:00 UTC
         keywords::time_based_rotation = sinks::file::rotation_at_time_point(0, 0, 0),
         keywords::format = "[%TimeStamp%] [%ThreadID%] [%Severity%]: %Message%"
     );
 }
 
+// handler to log shut down before program exit
 void signal_handler (int signal_num) {
   BOOST_LOG_TRIVIAL(info) << "Termination signal received";
   BOOST_LOG_TRIVIAL(info) << "Shutting down server";
@@ -52,6 +58,7 @@ int main(int argc, char* argv[])
   init();
   logging::add_common_attributes();
 
+  // register signal handler
   signal(SIGINT, signal_handler);
 
   try

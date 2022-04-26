@@ -59,27 +59,31 @@ int session::handle_read(const boost::system::error_code& error,
         {
           if (statement[0] == "echo") {
             handler = new RequestHandlerEcho();
-            BOOST_LOG_TRIVIAL(info) << "RequestHandlerEcho chosen\n";
+            // BOOST_LOG_TRIVIAL(debug) << "RequestHandlerEcho chosen\n";
           }
           else if (statement[0] == "static_serve") {
             // MODIFY HERE LATER TO ADD SUPPORT FOR RequestHandlerStaticServe
             handler = new RequestHandlerStatic(statement[2], prefix.length());
-            BOOST_LOG_TRIVIAL(info) << "RequestHandlerStatic chosen\n";
+            // BOOST_LOG_TRIVIAL(debug) << "RequestHandlerStatic chosen\n";
           }
           else {
-            BOOST_LOG_TRIVIAL(info) << "unrecognized request handler type: " << statement[0] << "\n"
-            << "only 'echo' and 'static_serve' are supported\n";
+           // BOOST_LOG_TRIVIAL(debug) << "unrecognized request handler type: " << statement[0] << "\n"
+            // << "only 'echo' and 'static_serve' are supported\n";
           }
         }
       }
       if (handler == NULL) {
+        BOOST_LOG_TRIVIAL(error) << "Received Invalid Request";
+
         this->resp = "HTTP/1.1 400 Bad Request\r\nContent-Type: text/html\r\n"
           "Content-Length: 37\r\n\r\n<html><h1>400 Bad Request</h1></html>";
+
+        BOOST_LOG_TRIVIAL(info) << "Created Response: 400 Bad Request";
       }
       else {
         this->resp = handler->get_response(sub);
       }
-      BOOST_LOG_TRIVIAL(info) << "Response generated: [" << this->resp << "]\n\n";
+      // BOOST_LOG_TRIVIAL(debug) << "Response generated: [" << this->resp << "]\n\n";
 
       boost::asio::async_write(socket_,
           boost::asio::buffer(this->resp, this->resp.length()),
@@ -133,6 +137,6 @@ bool session::url_prefix_matches(const std::string request_str, const std::strin
     std::string url_string = matches[1].str();
 
     std::string sub_url = url_string.substr(0, url_prefix.length());
-    std::cout << "sub_url: " << sub_url << "\n";
+    // std::cout << "sub_url: " << sub_url << "\n";
     return (sub_url == url_prefix);
 }

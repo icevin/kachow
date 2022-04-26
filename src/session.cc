@@ -67,13 +67,15 @@ int session::handle_read(const boost::system::error_code& error,
             BOOST_LOG_TRIVIAL(info) << "RequestHandlerStatic chosen\n";
           }
           else {
-            BOOST_LOG_TRIVIAL(fatal) << "unrecognized request handler type: " << statement[0] << "\n"
+            BOOST_LOG_TRIVIAL(info) << "unrecognized request handler type: " << statement[0] << "\n"
             << "only 'echo' and 'static_serve' are supported\n";
           }
         }
       }
-      if (handler == NULL)
-        this->resp = "HTTP/1.1 400 Bad Request \r\n";
+      if (handler == NULL) {
+        this->resp = "HTTP/1.1 400 Bad Request\r\nContent-Type: text/html\r\n"
+          "Content-Length: 37\r\n\r\n<html><h1>400 Bad Request</h1></html>";
+      }
       else {
         this->resp = handler->get_response(sub);
       }

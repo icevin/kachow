@@ -45,25 +45,24 @@ int session::handle_read(const boost::system::error_code& error,
       
       // Choose the appropriate RequestHandler based on the handler_statements_ object
       std::string request_str = sub;
-      RequestHandler* handler = NULL;
+      RequestHandler* handler = nullptr;
       for (const std::vector<std::string> statement : handler_statements_) {
         // check for matching url prefix
+        std::string handler_type = statement[0];
         std::string prefix = statement[1];
+        std::string request = statement[2];
         if (session::url_prefix_matches(request_str, prefix)) {
-          if (statement[0] == "echo") {
+          if (handler_type == "echo") {
             handler = new RequestHandlerEcho();
             // BOOST_LOG_TRIVIAL(debug) << "RequestHandlerEcho chosen\n";
-          } else if (statement[0] == "static_serve") {
+          } else if (handler_type == "static_serve") {
             // MODIFY HERE LATER TO ADD SUPPORT FOR RequestHandlerStaticServe
-            handler = new RequestHandlerStatic(statement[2], prefix.length());
+            handler = new RequestHandlerStatic(request, prefix.length());
             // BOOST_LOG_TRIVIAL(debug) << "RequestHandlerStatic chosen\n";
-          } else {
-           // BOOST_LOG_TRIVIAL(debug) << "unrecognized request handler type: " << statement[0] << "\n"
-            // << "only 'echo' and 'static_serve' are supported\n";
           }
         }
       }
-      if (handler == NULL) {
+      if (handler == nullptr) {
         BOOST_LOG_TRIVIAL(error) << "Received Invalid Request";
 
         this->resp = "HTTP/1.1 400 Bad Request\r\nContent-Type: text/html\r\n"
@@ -72,6 +71,7 @@ int session::handle_read(const boost::system::error_code& error,
         BOOST_LOG_TRIVIAL(info) << "Created Response: 400 Bad Request";
       } else {
         this->resp = handler->get_response(sub);
+        delete handler;
       }
       // BOOST_LOG_TRIVIAL(debug) << "Response generated: [" << this->resp << "]\n\n";
 

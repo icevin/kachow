@@ -1,15 +1,11 @@
+#include "mime.hh"
 #include "request_handler.hh"
 
-#include <boost/filesystem.hpp>
-#include <boost/log/trivial.hpp>
 #include <iostream>
 #include <sstream>
 #include <string>
-RequestHandlerEcho::RequestHandlerEcho(){
-  
-}
-
-#include "mime.hh"
+#include <boost/filesystem.hpp>
+#include <boost/log/trivial.hpp>
 
 std::string RequestHandlerEcho::get_response(std::string request_str) {
     BOOST_LOG_TRIVIAL(info) << "Received Echo Request";

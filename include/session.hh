@@ -1,4 +1,5 @@
 #pragma once
+
 #include "request_handler.hh"
 
 #include <cstdlib>
@@ -8,25 +9,23 @@
 
 using boost::asio::ip::tcp;
 
-class session
-{
-public:
+class session {
+ public:
   session(boost::asio::io_service& io_service, std::vector<std::vector<std::string>> handler_statements);
-
   tcp::socket& socket();
-
   int start();
 
   int test_start();
   int test_handle_read(const boost::system::error_code& error,
       size_t bytes_transferred);
   int test_handle_write(const boost::system::error_code& error);
-  bool url_prefix_matches(const std::string request_str, const std::string url_prefix); // PURE FUNCTION (move to utils)
 
-private:
+  // PURE FUNCTION (move to utils)
+  bool url_prefix_matches(const std::string request_str, const std::string url_prefix);
+
+ private:
   int handle_read(const boost::system::error_code& error,
       size_t bytes_transferred);
-
   int handle_write(const boost::system::error_code& error);
 
   tcp::socket socket_;

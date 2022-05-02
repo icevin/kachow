@@ -8,9 +8,9 @@
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
 
-#include "session.hh"
-#include "server.hh"
 #include "config_parser.hh"
+#include "server.hh"
+#include "session.hh"
 
 #include <csignal>
 #include <cstdlib>
@@ -29,14 +29,12 @@ namespace keywords = boost::log::keywords;
 
 using boost::asio::ip::tcp;
 
-void init()
-{
+void init() {
     // enable logging to console
     logging::add_console_log(std::cout, keywords::format = "[%TimeStamp%] [%ThreadID%] [%Severity%]: %Message%");
     
     // enable logging to file
-    logging::add_file_log
-    (
+    logging::add_file_log (
         keywords::file_name = "../log/server_%N.log",
         // rotate when log reaches 10 MB
         keywords::rotation_size = 10 * 1024 * 1024,
@@ -53,20 +51,17 @@ void signal_handler (int signal_num) {
   exit(signal_num);
 }
 
-int main(int argc, char* argv[])
-{
+int main(int argc, char* argv[]) {
   init();
   logging::add_common_attributes();
 
   // register signal handler
   signal(SIGINT, signal_handler);
 
-  try
-  {
+  try {
     BOOST_LOG_TRIVIAL(info) << "Starting up server";
 
-    if (argc != 2)
-    {
+    if (argc != 2) {
       std::cerr << "Usage: ./server <my_config>\n";
       BOOST_LOG_TRIVIAL(fatal) << "Config file not found";
       return 1;
@@ -102,8 +97,7 @@ int main(int argc, char* argv[])
 
     io_service.run();
   }
-  catch (std::exception& e)
-  {
+  catch (std::exception& e) {
     std::cerr << "Exception: " << e.what() << "\n";
   }
 

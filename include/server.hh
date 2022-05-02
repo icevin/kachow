@@ -9,17 +9,15 @@
 
 using boost::asio::ip::tcp;
 
-class server
-{
-public:
+class server {
+ public:
   server(boost::asio::io_service& io_service, int port, std::vector<std::vector<std::string>> handler_statements);
   int test_start_accept();
   int test_handle_accept(session* new_session,
       const boost::system::error_code& error);
 
-private:
+ private:
   int start_accept();
-
   int handle_accept(session* new_session,
       const boost::system::error_code& error);
 

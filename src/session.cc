@@ -50,14 +50,13 @@ int session::handle_read(const boost::system::error_code& error,
         // check for matching url prefix
         std::string handler_type = statement[0];
         std::string prefix = statement[1];
-        std::string request = statement[2];
         if (session::url_prefix_matches(request_str, prefix)) {
           if (handler_type == "echo") {
             handler = new RequestHandlerEcho();
             // BOOST_LOG_TRIVIAL(debug) << "RequestHandlerEcho chosen\n";
           } else if (handler_type == "static_serve") {
             // MODIFY HERE LATER TO ADD SUPPORT FOR RequestHandlerStaticServe
-            handler = new RequestHandlerStatic(request, prefix.length());
+            handler = new RequestHandlerStatic(statement[2], prefix.length());
             // BOOST_LOG_TRIVIAL(debug) << "RequestHandlerStatic chosen\n";
           }
         }

@@ -4,75 +4,90 @@
 #include <iostream>
 #include <sstream>
 #include <string>
+#include <boost/beast/http.hpp>
 #include <boost/filesystem.hpp>
 #include <boost/log/trivial.hpp>
 
-std::string RequestHandlerEcho::get_response(std::string request_str) {
-    BOOST_LOG_TRIVIAL(info) << "Received Echo Request";
+namespace http = boost::beast::http;
 
-    std::stringstream ss;
-    ss.str("");
+// handles request req by filling in response res with contents of
+// req as a string, returns true to indicate success 
+bool RequestHandlerEcho::get_response(const http::request<http::string_body> req, 
+    http::response<http::string_body>& res) {
+  BOOST_LOG_TRIVIAL(info) << "Received Echo Request";
 
-    ss << "HTTP/1.1 200 OK\r\n";
-    ss << "Content-Type: text/plain\r\n";
-    ss << "Content-Length: " << std::to_string(request_str.length()) << "\r\n";
-    ss << "\r\n";
-    ss << request_str;
+  // convert request to string
+  std::stringstream ss;
+  ss << req;
+  std:: string req_str = ss.str();
 
-    BOOST_LOG_TRIVIAL(info) << "Created Response: 200 OK";
-    return ss.str();
+  // fill in echo response
+  res.version(11);
+  res.result(http::status::ok);
+  res.set(http::field::content_type, "text/plain");
+  res.body() = req_str;
+
+  // fill in content length
+  res.prepare_payload();
+
+  BOOST_LOG_TRIVIAL(info) << "Created Response: 200 OK";
+  return true;
 }
 
-std::string RequestHandlerStatic::get_response(std::string request_str) {
-    std::stringstream ss;
-    ss.str("");
+// handles request req by filling in response res with contents of
+// target file or 400/404 error message, returns true to indicate success 
+bool RequestHandlerStatic::get_response(const http::request<http::string_body> req, 
+    http::response<http::string_body>& res) {
+  BOOST_LOG_TRIVIAL(info) << "Received Static Request";
 
-    std::string status_code    = "200 OK";
-    std::string content_type   = "text/plain";
-    std::string content_length = std::to_string(request_str.length());
-    std::string response_body  = "";
+  // convert request to string
+  std::stringstream ss;
+  ss << req;
+  std:: string request_str = ss.str();
 
-    std::size_t GET_INDEX  = request_str.find("GET ");
-    std::size_t HTTP_INDEX = request_str.find(" HTTP/");
-    std::string request_path;
-
-    if (GET_INDEX == std::string::npos || HTTP_INDEX == std::string::npos) {
-        BOOST_LOG_TRIVIAL(error) << "Received Malformed Request";
-        status_code   = "400 Bad Request";
-        response_body = "<html><h1>400 Bad Request</h1></html>";
-        content_length = std::to_string(response_body.size());
-        content_type   = "text/html";
+  // find index for parsing
+  std::size_t GET_INDEX  = request_str.find("GET ");
+  std::size_t HTTP_INDEX = request_str.find(" HTTP/");
+  std::string request_path;
+    
+  if (GET_INDEX == std::string::npos || HTTP_INDEX == std::string::npos) {
+    // unable to find index
+    BOOST_LOG_TRIVIAL(error) << "Received Malformed Request";
+    res.version(11);
+    res.result(http::status::bad_request);
+    res.set(http::field::content_type, "text/html");
+    res.body() = "<html><h1>400 Bad Request</h1></html>";
+  } else {
+    // construct file path
+    request_path = request_str.substr(GET_INDEX + 4 + prefix_length_, HTTP_INDEX - GET_INDEX - 4 - prefix_length_);
+    BOOST_LOG_TRIVIAL(info) << "Received Static Request: " << request_path;
+    boost::filesystem::path full_path = base_path;
+    full_path /= request_path;
+    if (!boost::filesystem::exists(full_path) || !boost::filesystem::is_regular_file(full_path)) {
+      // file not found
+      BOOST_LOG_TRIVIAL(error) << "404 Not Found: " << full_path.string();
+      res.version(11);
+      res.result(http::status::not_found);
+      res.set(http::field::content_type, "text/html");
+      res.body() = "<html><h1>404 Not Found</h1></html>";
     } else {
-        request_path = request_str.substr(GET_INDEX + 4 + prefix_length_, HTTP_INDEX - GET_INDEX - 4 - prefix_length_);
-        BOOST_LOG_TRIVIAL(info) << "Received Static Request: " << request_path;
-        boost::filesystem::path full_path = base_path;
-        full_path /= request_path;
-        if (!boost::filesystem::exists(full_path) || !boost::filesystem::is_regular_file(full_path)) {
-            BOOST_LOG_TRIVIAL(error) << "404 Not Found: " << full_path.string();
-            status_code    = "404 Not Found";
-            response_body  = "<html><h1>404 Not Found</h1></html>";
-            content_length = std::to_string(response_body.size());
-            content_type   = "text/html";
-        } else {
-            content_type = extensionToMIME(full_path.extension().string());
-            std::ostringstream buf;
-            std::ifstream input(full_path.c_str());
-            buf << input.rdbuf();
-            response_body  = buf.str();
-            content_length = std::to_string(response_body.size());
-            BOOST_LOG_TRIVIAL(info) << "Serving " << full_path.string() << ", size " << content_length;
-        }
+      // file found
+      std::string content_type = extensionToMIME(full_path.extension().string());
+      std::ostringstream buf;
+      std::ifstream input(full_path.c_str());
+      buf << input.rdbuf();
+      std::string response_body  = buf.str();
+      res.version(11);
+      res.result(http::status::ok);
+      res.set(http::field::content_type, content_type);
+      res.body() = response_body;
+      BOOST_LOG_TRIVIAL(info) << "Serving " << full_path.string();
     }
+  }
 
-    // Assemble response header - at some point we should adapt to use boost::http:response
-    ss << "HTTP/1.1 " << status_code << "\r\n";
-    ss << "Content-Type: " << content_type << "\r\n";
-    if (content_length != "") ss << "Content-Length: " << content_length << "\r\n";
-    ss << "\r\n";
+  // fill in content length
+  res.prepare_payload();
 
-    // Send body if applicable
-    if (response_body != "") ss << response_body;
-
-    BOOST_LOG_TRIVIAL(info) << "Created Response: " << status_code;
-    return ss.str();
+  BOOST_LOG_TRIVIAL(info) << "Created Response: ";
+  return true;
 }

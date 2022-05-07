@@ -5,7 +5,11 @@
 #include <cstdlib>
 #include <iostream>
 #include <boost/asio.hpp>
+#include <boost/beast/core.hpp>
+#include <boost/beast/http.hpp>
 #include <boost/bind.hpp>
+
+namespace http = boost::beast::http;
 
 using boost::asio::ip::tcp;
 
@@ -21,7 +25,7 @@ class session {
   int test_handle_write(const boost::system::error_code& error);
 
   // PURE FUNCTION (move to utils)
-  bool url_prefix_matches(const std::string request_str, const std::string url_prefix);
+  bool url_prefix_matches(const std::string target, const std::string url_prefix);
 
  private:
   int handle_read(const boost::system::error_code& error,
@@ -29,8 +33,8 @@ class session {
   int handle_write(const boost::system::error_code& error);
 
   tcp::socket socket_;
-  enum { max_length = 1024, header_length = 63 };
-  char data_[max_length];
-  std::string resp;
+  boost::beast::flat_buffer buffer_;
+  http::request<http::string_body> request_;
+  http::response<http::string_body> response_;
   std::vector<std::vector<std::string>> handler_statements_;
 };

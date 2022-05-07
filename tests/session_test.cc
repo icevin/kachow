@@ -1,6 +1,7 @@
 #include "gtest/gtest.h"
 #include "server.hh"
 #include "session.hh"
+
 #include <boost/system/error_code.hpp>
 
 using boost::asio::ip::tcp;
@@ -28,12 +29,6 @@ TEST_F(SessionTest, SuccessfulSocket) {
   delete s;
 }
 
-TEST_F(SessionTest, SuccessfulHandleRead) {
-  int rc = s->test_handle_read(boost::system::error_code(), 0);
-  EXPECT_EQ(rc, 1);
-  delete s;
-}
-
 TEST_F(SessionTest, SuccessfulHandleWrite) {
   int rc = s->test_handle_write(boost::system::error_code());
   EXPECT_EQ(rc, 1);
@@ -53,25 +48,25 @@ TEST_F(SessionTest, FailedHandleWrite) {
 }
 
 TEST_F(SessionTest, PrefixMatcherTrueWhenNeeded) {
-  std::string request = "GET /echo/stuff HTTP/1.1";
+  std::string target = "/echo/stuff";
   std::string prefix = "/echo";
-  bool result = s->url_prefix_matches(request, prefix);
+  bool result = s->url_prefix_matches(target, prefix);
   std::cout << "PrefixMatcherTrueWhenNeeded result: " << result << "\n";
   EXPECT_TRUE(result);
 }
 
 TEST_F(SessionTest, PrefixMatcherFalseWhenNeeded) {
-  std::string request = "GET /static/stuff HTTP/1.1";
+  std::string target = "/static/stuff";
   std::string prefix = "/echo";
-  int result = s->url_prefix_matches(request, prefix);
+  int result = s->url_prefix_matches(target, prefix);
   std::cout << "PrefixMatcherFalseWhenNeeded result: " << result << "\n";
   EXPECT_FALSE(result);
 }
 
 TEST_F(SessionTest, PrefixMatcherTrueWhenSlash) {
-  std::string request = "GET /foo/bar HTTP/1.1";
+  std::string target = "/foo/bar";
   std::string prefix = "/";
-  int result = s->url_prefix_matches(request, prefix);
+  int result = s->url_prefix_matches(target, prefix);
   std::cout << "PrefixMatcherTrueWhenSlash result: " << result << "\n";
   EXPECT_TRUE(result);
 }

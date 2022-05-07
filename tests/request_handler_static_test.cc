@@ -3,6 +3,9 @@
 
 #include <iostream>
 #include <string>
+#include <boost/beast/http.hpp>
+
+namespace http = boost::beast::http;
 
 using namespace std;
 
@@ -21,16 +24,25 @@ class StaticTest : public ::testing::Test {
 };
 
 TEST_F(StaticTest, Static200) {
-  std::string expected_response = "HTTP/1.1 200 OK\r\nContent-Type: application/octet-stream\r\nContent-Length: 14\r\n\r\ninvalid config";
-  EXPECT_EQ(expected_response, a->get_response("GET /invalid_config HTTP/1.1"));
+  http::request<http::string_body> req(http::verb::get, "/invalid_config", 11);
+  http::response<http::string_body> res;
+
+  a->get_response(req, res);
+  EXPECT_EQ(res.result_int(), 200);
 }
 
 TEST_F(StaticTest, Static400) {
-  std::string expected_response = "HTTP/1.1 400 Bad Request\r\nContent-Type: text/html\r\nContent-Length: 37\r\n\r\n<html><h1>400 Bad Request</h1></html>";
-  EXPECT_EQ(expected_response, a->get_response("INVALID HTTP REQUEST"));
+  http::request<http::string_body> req(http::verb::post, "/bad", 11);
+  http::response<http::string_body> res;
+
+  a->get_response(req, res);
+  EXPECT_EQ(res.result_int(), 400);
 }
 
 TEST_F(StaticTest, Static404) {
-  std::string expected_response = "HTTP/1.1 404 Not Found\r\nContent-Type: text/html\r\nContent-Length: 35\r\n\r\n<html><h1>404 Not Found</h1></html>";
-  EXPECT_EQ(expected_response, a->get_response("GET /non_existing_file HTTP/1.1"));
+  http::request<http::string_body> req(http::verb::get, "/non_existing_file", 11);
+  http::response<http::string_body> res;
+
+  a->get_response(req, res);
+  EXPECT_EQ(res.result_int(), 404);
 }

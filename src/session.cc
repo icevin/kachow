@@ -6,8 +6,11 @@
 #include <regex>
 #include <string>
 #include <boost/asio.hpp>
+#include <boost/beast/http.hpp>
 #include <boost/bind.hpp>
 #include <boost/log/trivial.hpp>
+
+namespace http = boost::beast::http;
 
 using boost::asio::ip::tcp;
 
@@ -21,36 +24,31 @@ tcp::socket& session::socket() {
   }
 
 int session::start() {
-    socket_.async_read_some(boost::asio::buffer(data_, max_length),
-        boost::bind(&session::handle_read, this,
-          boost::asio::placeholders::error,
-          boost::asio::placeholders::bytes_transferred));
+  http::async_read(socket_, buffer_, request_,
+          boost::bind(&session::handle_read, this,
+            boost::asio::placeholders::error,
+            boost::asio::placeholders::bytes_transferred));
     return 1;
   }
 
 int session::handle_read(const boost::system::error_code& error,
       size_t bytes_transferred) {
     if (!error) {
-      std::string sub(data_);
+        auto method_sv = request_.method_string();
+        auto target_sv = request_.target();
+        std::string method(method_sv);
+        std::string target(target_sv);
 
-      if (bytes_transferred > 0) {
-        sub = sub.substr(0, bytes_transferred);
-        std::size_t first_cr = sub.find('\r');
-        std::size_t first_lf = sub.find('\n');
-        std::size_t header_end = std::min(first_cr, first_lf);
+        BOOST_LOG_TRIVIAL(info) << method << " " << target << " " << "HTTP/1.1" 
+          << " (" << socket_.remote_endpoint().address().to_string() << ")";
 
-        BOOST_LOG_TRIVIAL(info) << sub.substr(0, header_end) << " (" 
-          << socket_.remote_endpoint().address().to_string() << ")";
-      }
-      
       // Choose the appropriate RequestHandler based on the handler_statements_ object
-      std::string request_str = sub;
       RequestHandler* handler = nullptr;
       for (const std::vector<std::string> statement : handler_statements_) {
         // check for matching url prefix
         std::string handler_type = statement[0];
         std::string prefix = statement[1];
-        if (session::url_prefix_matches(request_str, prefix)) {
+        if (session::url_prefix_matches(target, prefix)) {
           if (handler_type == "echo") {
             handler = new RequestHandlerEcho();
             // BOOST_LOG_TRIVIAL(debug) << "RequestHandlerEcho chosen\n";
@@ -61,21 +59,24 @@ int session::handle_read(const boost::system::error_code& error,
           }
         }
       }
+
       if (handler == nullptr) {
         BOOST_LOG_TRIVIAL(error) << "Received Invalid Request";
 
-        this->resp = "HTTP/1.1 400 Bad Request\r\nContent-Type: text/html\r\n"
-          "Content-Length: 37\r\n\r\n<html><h1>400 Bad Request</h1></html>";
+        response_.version(11);
+        response_.result(http::status::bad_request);
+        response_.set(http::field::content_type, "text/html");
+        response_.body() = "<html><h1>400 Bad Request</h1></html>";
+        response_.prepare_payload();
 
         BOOST_LOG_TRIVIAL(info) << "Created Response: 400 Bad Request";
       } else {
-        this->resp = handler->get_response(sub);
+        handler->get_response(request_, response_);
         delete handler;
       }
       // BOOST_LOG_TRIVIAL(debug) << "Response generated: [" << this->resp << "]\n\n";
 
-      boost::asio::async_write(socket_,
-          boost::asio::buffer(this->resp, this->resp.length()),
+      http::async_write(socket_, response_,
           boost::bind(&session::handle_write, this,
             boost::asio::placeholders::error));
       return 1;
@@ -87,7 +88,7 @@ int session::handle_read(const boost::system::error_code& error,
 
 int session::handle_write(const boost::system::error_code& error) {
     if (!error) {
-      socket_.async_read_some(boost::asio::buffer(data_, max_length),
+      http::async_read(socket_, buffer_, request_,
           boost::bind(&session::handle_read, this,
             boost::asio::placeholders::error,
             boost::asio::placeholders::bytes_transferred));
@@ -111,14 +112,8 @@ int session::test_handle_write(const boost::system::error_code& error) {
   return handle_write(error);
 }
 
-bool session::url_prefix_matches(const std::string request_str, const std::string url_prefix) {
-    std::regex rgx("GET (.+) HTTP");
-
-    std::smatch matches;
-    std::regex_search(request_str, matches, rgx);
-    std::string url_string = matches[1].str();
-
-    std::string sub_url = url_string.substr(0, url_prefix.length());
+bool session::url_prefix_matches(const std::string target, const std::string url_prefix) {
+    std::string sub_url = target.substr(0, url_prefix.length());
     // std::cout << "sub_url: " << sub_url << "\n";
     return (sub_url == url_prefix);
 }

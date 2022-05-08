@@ -8,7 +8,6 @@
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
 
-#include "config_parser.hh"
 #include "server.hh"
 #include "session.hh"
 
@@ -94,6 +93,8 @@ int main(int argc, char* argv[]) {
     BOOST_LOG_TRIVIAL(info) << "Attempting to start server on port " << portNumber;
     server s(io_service, portNumber, handler_statements);
     BOOST_LOG_TRIVIAL(info) << "Successfully started server on port " << portNumber;
+
+    server::generate_routes(&config);
 
     io_service.run();
   }

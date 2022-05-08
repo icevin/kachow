@@ -37,7 +37,7 @@ include_directories(include)
 add_library(session_lib src/session.cc)
 add_library(server_lib src/server.cc)
 add_library(config_parser_lib src/config_parser.cc)
-add_library(request_handler_lib src/request_handler.cc)
+add_library(request_handler_lib src/request_handler.cc src/request_handler_factory.cc)
 target_link_libraries(server_lib session_lib config_parser_lib request_handler_lib Boost::log)
 
 # Include -pthread when compiling

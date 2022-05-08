@@ -12,8 +12,8 @@ class SessionTest : public ::testing::Test {
   session* s;
 
   void SetUp() override {
-    std::vector<std::vector<std::string>> handler_statements;
-    s = new session(io, handler_statements);
+    std::map<std::string, RequestHandlerFactory*> routes;
+    s = new session(io, routes);
   }
 
 };
@@ -47,7 +47,7 @@ TEST_F(SessionTest, FailedHandleWrite) {
   EXPECT_EQ(rc, -1);
 }
 
-TEST_F(SessionTest, PrefixMatcherTrueWhenNeeded) {
+/*TEST_F(SessionTest, PrefixMatcherTrueWhenNeeded) {
   std::string target = "/echo/stuff";
   std::string prefix = "/echo";
   bool result = s->url_prefix_matches(target, prefix);
@@ -69,4 +69,4 @@ TEST_F(SessionTest, PrefixMatcherTrueWhenSlash) {
   int result = s->url_prefix_matches(target, prefix);
   std::cout << "PrefixMatcherTrueWhenSlash result: " << result << "\n";
   EXPECT_TRUE(result);
-}
+}*/

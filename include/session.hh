@@ -1,6 +1,7 @@
 #pragma once
 
 #include "request_handler.hh"
+#include "request_handler_factory.hh"
 
 #include <cstdlib>
 #include <iostream>
@@ -15,7 +16,7 @@ using boost::asio::ip::tcp;
 
 class session {
  public:
-  session(boost::asio::io_service& io_service, std::vector<std::vector<std::string>> handler_statements);
+  session(boost::asio::io_service& io_service, std::map<std::string, RequestHandlerFactory*> routes);
   tcp::socket& socket();
   int start();
 
@@ -26,11 +27,14 @@ class session {
 
   // PURE FUNCTION (move to utils)
   bool url_prefix_matches(const std::string target, const std::string url_prefix);
+  // PURE FUNCTION
+  static std::string match(std::map<std::string, RequestHandlerFactory*> routes, std::string request_url);
 
  private:
   int handle_read(const boost::system::error_code& error,
       size_t bytes_transferred);
   int handle_write(const boost::system::error_code& error);
+  static std::map<std::string, RequestHandlerFactory*> routes_;
 
   tcp::socket socket_;
   boost::beast::flat_buffer buffer_;

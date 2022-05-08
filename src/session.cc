@@ -14,9 +14,11 @@ namespace http = boost::beast::http;
 
 using boost::asio::ip::tcp;
 
-session::session(boost::asio::io_service& io_service, std::vector<std::vector<std::string>> handler_statements)
+std::map<std::string, RequestHandlerFactory*> session::routes_;
+
+session::session(boost::asio::io_service& io_service, std::map<std::string, RequestHandlerFactory*> routes)
     : socket_(io_service) {
-    handler_statements_ = handler_statements;
+    routes_ = routes;
   }
 
 tcp::socket& session::socket() {
@@ -43,7 +45,7 @@ int session::handle_read(const boost::system::error_code& error,
           << " (" << socket_.remote_endpoint().address().to_string() << ")";
 
       // Choose the appropriate RequestHandler based on the handler_statements_ object
-      RequestHandler* handler = nullptr;
+      /*RequestHandler* handler = nullptr;
       for (const std::vector<std::string> statement : handler_statements_) {
         // check for matching url prefix
         std::string handler_type = statement[0];
@@ -58,9 +60,13 @@ int session::handle_read(const boost::system::error_code& error,
             // BOOST_LOG_TRIVIAL(debug) << "RequestHandlerStatic chosen\n";
           }
         }
-      }
+      } */
 
-      if (handler == nullptr) {
+      std::string location = session::match(routes_, target);
+      BOOST_LOG_TRIVIAL(debug) << "got location from session::match\n";
+
+      // Checks if a matching handler exists
+      if (routes_.count(location) == 0) {
         BOOST_LOG_TRIVIAL(error) << "Received Invalid Request";
 
         response_.version(11);
@@ -71,6 +77,10 @@ int session::handle_read(const boost::system::error_code& error,
 
         BOOST_LOG_TRIVIAL(info) << "Created Response: 400 Bad Request";
       } else {
+        RequestHandlerFactory* factory = routes_[location];
+        BOOST_LOG_TRIVIAL(debug) << "got factory pointer from routes_\n";
+        RequestHandler* handler = factory->create(location, target);
+        BOOST_LOG_TRIVIAL(debug) << "created handler using factory\n";
         handler->get_response(request_, response_);
         delete handler;
       }
@@ -116,4 +126,19 @@ bool session::url_prefix_matches(const std::string target, const std::string url
     std::string sub_url = target.substr(0, url_prefix.length());
     // std::cout << "sub_url: " << sub_url << "\n";
     return (sub_url == url_prefix);
+}
+
+std::string session::match(std::map<std::string, RequestHandlerFactory*> routes, std::string request_url) {
+  std::map<std::string, RequestHandlerFactory*>::iterator itr;
+  int longest_match = 0;
+  std::string longest_match_location;
+  for (itr = routes.begin(); itr != routes.end(); ++itr) {
+    std::string sub_url = request_url.substr(0, (itr->first).length());
+    if (sub_url == itr->first && sub_url.length() > longest_match)
+    {
+      longest_match = sub_url.length();
+      longest_match_location = sub_url;
+    }
+  }
+  return longest_match_location;
 }

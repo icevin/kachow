@@ -111,12 +111,6 @@ int session::test_handle_write(const boost::system::error_code& error) {
   return handle_write(error);
 }
 
-bool session::url_prefix_matches(const std::string target, const std::string url_prefix) {
-    std::string sub_url = target.substr(0, url_prefix.length());
-    // std::cout << "sub_url: " << sub_url << "\n";
-    return (sub_url == url_prefix);
-}
-
 std::string session::match(std::map<std::string, RequestHandlerFactory*> routes, std::string request_url) {
   std::map<std::string, RequestHandlerFactory*>::iterator itr;
   int longest_match = 0;

@@ -25,8 +25,6 @@ class session {
       size_t bytes_transferred);
   int test_handle_write(const boost::system::error_code& error);
 
-  // PURE FUNCTION (move to utils)
-  bool url_prefix_matches(const std::string target, const std::string url_prefix);
   // PURE FUNCTION
   static std::string match(std::map<std::string, RequestHandlerFactory*> routes, std::string request_url);
 

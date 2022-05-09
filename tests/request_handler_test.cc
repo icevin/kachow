@@ -37,6 +37,20 @@ class StaticTest : public ::testing::Test {
 
 };
 
+class NotFoundTest : public ::testing::Test {
+ protected:
+  RequestHandlerNotFound* not_found_handler;
+
+  void SetUp() override {
+    not_found_handler = new RequestHandlerNotFound();
+  }
+
+  void TearDown() override {
+    delete not_found_handler;
+  }
+
+};
+
 TEST_F(EchoTest, SuccessfulEcho) {
   http::request<http::string_body> req(http::verb::get, "/echo", 11);
   http::response<http::string_body> res;
@@ -91,4 +105,15 @@ TEST_F(StaticTest, Static405) {
   EXPECT_FALSE(status);
   EXPECT_EQ(res.result_int(), 405);
   EXPECT_EQ(res.body(), "<html><h1>405 Not Allowed</h1></html>");
+}
+
+TEST_F(NotFoundTest, NotFound) {
+  http::request<http::string_body> req(http::verb::get, "/", 11);
+  http::response<http::string_body> res;
+
+  bool status = not_found_handler->get_response(req, res);
+
+  EXPECT_TRUE(status);
+  EXPECT_EQ(res.result_int(), 404);
+  EXPECT_EQ(res.body(), "<html><h1>404 Not Found</h1></html>");
 }

@@ -63,6 +63,7 @@ bool RequestHandlerStatic::get_response(const http::request<http::string_body> r
       res.prepare_payload();
       return false;
     }
+  }
 
   // construct full file path
   auto url_sv = req.target();

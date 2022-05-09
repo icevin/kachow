@@ -31,3 +31,11 @@ class RequestHandlerStatic : public RequestHandler {
   boost::filesystem::path base_path;
   int prefix_length_;
 };
+
+class RequestHandlerNotFound : public RequestHandler {
+ public:
+  RequestHandlerNotFound() {};
+
+  virtual bool get_response(const http::request<http::string_body> req, 
+    http::response<http::string_body>& res);
+};

@@ -44,26 +44,8 @@ int session::handle_read(const boost::system::error_code& error,
         BOOST_LOG_TRIVIAL(info) << method << " " << target << " " << "HTTP/1.1" 
           << " (" << socket_.remote_endpoint().address().to_string() << ")";
 
-      // Choose the appropriate RequestHandler based on the handler_statements_ object
-      /*RequestHandler* handler = nullptr;
-      for (const std::vector<std::string> statement : handler_statements_) {
-        // check for matching url prefix
-        std::string handler_type = statement[0];
-        std::string prefix = statement[1];
-        if (session::url_prefix_matches(target, prefix)) {
-          if (handler_type == "echo") {
-            handler = new RequestHandlerEcho();
-            // BOOST_LOG_TRIVIAL(debug) << "RequestHandlerEcho chosen\n";
-          } else if (handler_type == "static_serve") {
-            // MODIFY HERE LATER TO ADD SUPPORT FOR RequestHandlerStaticServe
-            handler = new RequestHandlerStatic(statement[2], prefix.length());
-            // BOOST_LOG_TRIVIAL(debug) << "RequestHandlerStatic chosen\n";
-          }
-        }
-      } */
-
       std::string location = session::match(routes_, target);
-      BOOST_LOG_TRIVIAL(debug) << "got location from session::match\n";
+      BOOST_LOG_TRIVIAL(debug) << "got location from session::match: " << location << "\n";
 
       // Checks if a matching handler exists
       if (routes_.count(location) == 0) {
@@ -76,6 +58,13 @@ int session::handle_read(const boost::system::error_code& error,
         response_.prepare_payload();
 
         BOOST_LOG_TRIVIAL(info) << "Created Response: 400 Bad Request";
+
+        // 404 Version (unused)
+        // RequestHandlerFactory* factory = new NotFoundHandlerFactory();
+        // RequestHandler* handler = factory->create(location, target);
+        // BOOST_LOG_TRIVIAL(debug) << "created handler using factory\n";
+        // handler->get_response(request_, response_);
+        // delete handler;
       } else {
         RequestHandlerFactory* factory = routes_[location];
         BOOST_LOG_TRIVIAL(debug) << "got factory pointer from routes_\n";

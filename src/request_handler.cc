@@ -1,12 +1,13 @@
-#include "mime.hh"
 #include "request_handler.hh"
 
-#include <iostream>
-#include <sstream>
-#include <string>
 #include <boost/beast/http.hpp>
 #include <boost/filesystem.hpp>
 #include <boost/log/trivial.hpp>
+#include <iostream>
+#include <sstream>
+#include <string>
+
+#include "mime.hh"
 
 namespace http = boost::beast::http;
 
@@ -62,7 +63,6 @@ bool RequestHandlerStatic::get_response(const http::request<http::string_body> r
       res.prepare_payload();
       return false;
     }
-  }
 
   // construct full file path
   auto url_sv = req.target();
@@ -101,4 +101,20 @@ bool RequestHandlerStatic::get_response(const http::request<http::string_body> r
 
   BOOST_LOG_TRIVIAL(info) << "Created Response: " << std::to_string(res.result_int());
   return true;
+}
+
+bool RequestHandlerNotFound::get_response(const http::request<http::string_body> req,
+                                     http::response<http::string_body>& res) {
+    BOOST_LOG_TRIVIAL(info) << "404 Not Found: Prefix not matched";
+
+    // Fill in 404 response
+    res.version(11);
+    res.result(http::status::not_found);
+    res.set(http::field::content_type, "text/html");
+    res.body() = "<html><h1>404 Not Found</h1></html>";
+    // Fill in content length
+    res.prepare_payload();
+
+    BOOST_LOG_TRIVIAL(info) << "Created Response: 404 Not Found";
+    return true;
 }

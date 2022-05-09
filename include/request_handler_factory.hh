@@ -21,3 +21,9 @@ class EchoHandlerFactory : public  RequestHandlerFactory{
   EchoHandlerFactory() {};
   RequestHandler* create(std::string location, std::string request_url);
 };
+
+class NotFoundHandlerFactory : public RequestHandlerFactory{
+  public:
+    NotFoundHandlerFactory() {};
+    RequestHandler* create(std::string location, std::string request_url);
+};

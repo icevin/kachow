@@ -1,3 +1,4 @@
+#include "request_handler.hh"
 #include "request_handler_factory.hh"
 #include <string>
 
@@ -8,4 +9,8 @@ RequestHandler* StaticHandlerFactory::create(std::string location, std::string r
 
 RequestHandler* EchoHandlerFactory::create(std::string location, std::string request_url) {
     return new RequestHandlerEcho();
+}
+
+RequestHandler* NotFoundHandlerFactory::create(std::string location, std::string request_url) {
+    return new RequestHandlerNotFound();
 }

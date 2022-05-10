@@ -38,5 +38,4 @@ class session {
   boost::beast::flat_buffer buffer_;
   http::request<http::string_body> request_;
   http::response<http::string_body> response_;
-  std::vector<std::vector<std::string>> handler_statements_;
 };

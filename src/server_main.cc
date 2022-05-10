@@ -87,11 +87,9 @@ int main(int argc, char* argv[]) {
       BOOST_LOG_TRIVIAL(fatal) << "Port number not found in config file";
       return 1;
     }
-    //// Get info on request handlers
-    std::vector<std::vector<std::string>> handler_statements = config.getRequestHandlerStatements();
 
     BOOST_LOG_TRIVIAL(info) << "Attempting to start server on port " << portNumber;
-    server s(io_service, portNumber, handler_statements);
+    server s(io_service, portNumber);
     BOOST_LOG_TRIVIAL(info) << "Successfully started server on port " << portNumber;
 
     server::generate_routes(&config);

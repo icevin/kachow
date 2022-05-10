@@ -13,8 +13,7 @@ class ServerTest : public ::testing::Test {
 
   // Avoid port 80 for testing
   int port = 8080;
-  std::vector<std::vector<std::string>> handler_statements; // not actually used
-  server s = server(io, port, handler_statements);
+  server s = server(io, port);
 };
 
 /*TEST_F(ServerTest, SuccessfulStartAccept) {

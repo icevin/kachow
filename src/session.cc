@@ -111,6 +111,9 @@ int session::test_handle_write(const boost::system::error_code& error) {
   return handle_write(error);
 }
 
+// Matches a request url (e.g. /static/kachow.jpeg) to a location (e.g. /static/)
+// - uses longest prefix matching to make the choice
+// -> returns the location as a string
 std::string session::match(std::map<std::string, RequestHandlerFactory*> routes, std::string request_url) {
   std::map<std::string, RequestHandlerFactory*>::iterator itr;
   int longest_match = 0;

@@ -39,3 +39,20 @@ class RequestHandlerNotFound : public RequestHandler {
   virtual bool get_response(const http::request<http::string_body> req, 
     http::response<http::string_body>& res);
 };
+
+class RequestHandlerAPI : public RequestHandler {
+ public:
+  RequestHandlerAPI(std::string data_path, int prefix_length)
+    : base_path(data_path), prefix_length_{prefix_length} {};
+
+  virtual bool get_response(const http::request<http::string_body> req, 
+    http::response<http::string_body>& res);
+
+ private:
+  // parse url target, returns request id (or 0 if none)
+  bool parse_url_target(const http::request<http::string_body> req, 
+    boost::filesystem::path& full_path, int& id);
+    
+  boost::filesystem::path base_path;
+  int prefix_length_;
+};

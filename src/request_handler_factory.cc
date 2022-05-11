@@ -14,3 +14,7 @@ RequestHandler* EchoHandlerFactory::create(std::string location, std::string req
 RequestHandler* NotFoundHandlerFactory::create(std::string location, std::string request_url) {
     return new RequestHandlerNotFound();
 }
+
+RequestHandler* APIHandlerFactory::create(std::string location, std::string request_url) {
+    return new RequestHandlerAPI(this->root_file_path_, location.length());
+}

@@ -4,5 +4,8 @@ server {
   location /static StaticHandler {
     root ./;
   }
+  location /api APIHandler {
+    root ./api;
+  }
   location / NotFoundHandler;
 }

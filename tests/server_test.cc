@@ -52,5 +52,6 @@ TEST_F(ServerTest, RoutesSmokeTest) {
   EXPECT_EQ(routes.count("/echo"), 1);
   EXPECT_EQ(routes.count("/static"), 1);
   EXPECT_EQ(routes.count("/"), 1);
-  EXPECT_EQ(routes.size(), 3);
+  EXPECT_EQ(routes.count("/api"), 1);
+  EXPECT_EQ(routes.size(), 4);
 }

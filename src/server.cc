@@ -71,6 +71,11 @@ void server::generate_routes(NginxConfig* config) {
                     if (name == "NotFoundHandler") {
                         routes.insert(std::pair<std::string, RequestHandlerFactory*>(location, new NotFoundHandlerFactory()));
                     }
+                    if (name == "APIHandler") {
+                        std::string root_file_path = sub_statement->child_block_->statements_[0]->tokens_[1];
+                        routes.insert(std::pair<std::string, RequestHandlerFactory*>(
+                            location, new APIHandlerFactory(root_file_path)));
+                    }
                 }
             }
         }

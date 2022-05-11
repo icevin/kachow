@@ -27,3 +27,11 @@ class NotFoundHandlerFactory : public RequestHandlerFactory{
     NotFoundHandlerFactory() {};
     RequestHandler* create(std::string location, std::string request_url);
 };
+
+class APIHandlerFactory : public RequestHandlerFactory{
+ public:
+  APIHandlerFactory(std::string root_file_path) : root_file_path_(root_file_path) {};
+  RequestHandler* create(std::string location, std::string request_url);
+ private:
+  std::string root_file_path_;
+};

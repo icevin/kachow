@@ -6,10 +6,12 @@
 #include <iostream>
 #include <sstream>
 #include <string>
+#include <exception>
 
 #include "mime.hh"
 
 namespace http = boost::beast::http;
+namespace fs = boost::filesystem;
 
 // handles request req by filling in response res with contents of
 // req as a string, returns true to indicate success 
@@ -118,4 +120,136 @@ bool RequestHandlerNotFound::get_response(const http::request<http::string_body>
 
     BOOST_LOG_TRIVIAL(info) << "Created Response: 404 Not Found";
     return true;
+}
+
+
+bool RequestHandlerAPI::get_response(const http::request<http::string_body> req, 
+    http::response<http::string_body>& res) {
+  BOOST_LOG_TRIVIAL(info) << "Serving API Request";
+
+  // check request method
+  auto method_sv = req.method_string();
+  std::string method(method_sv);
+  // declare variables
+  int id = 0;
+  fs::path full_path;
+  std::string content_type;
+  std::string response_body = "";
+  // parse url path
+  parse_url_target(req, full_path, id);
+  // Create
+  if (method == "POST") {
+    // TODO: implement POST
+  }
+  // Retrieve or List
+  else if (method == "GET") {
+    // List
+    if (id == 0) {
+      // path not found, return 494
+      if (!fs::exists(full_path)) {
+        BOOST_LOG_TRIVIAL(error) << "404 Not Found: " << full_path.string();
+        res.result(http::status::not_found);
+        res.set(http::field::content_type, "text/html");
+        res.body() = "<html><h1>404 Not Found</h1></html>";
+        res.prepare_payload();
+        return false;
+      } 
+      // iterate through all regular files
+      for (const auto & entry : fs::directory_iterator(full_path)){
+        if (fs::is_regular_file(entry.status())) {
+          // TODO: implement List 
+        }
+      }
+      // set content type
+      content_type = "application/json";
+      // convert json array to string
+      BOOST_LOG_TRIVIAL(info) << "API listing " << full_path.string() << std::endl;
+    }
+    // Retrive 
+    else {
+      // file not found, return 404
+      if (!fs::exists(full_path) || !fs::is_regular_file(full_path)) {
+        BOOST_LOG_TRIVIAL(error) << "404 Not Found: " << full_path.string();
+        res.result(http::status::not_found);
+        res.set(http::field::content_type, "text/html");
+        res.body() = "<html><h1>404 Not Found</h1></html>";
+        res.prepare_payload();
+        return false;
+      } 
+      // file found, get file
+      else {
+        // get content type
+        content_type = extensionToMIME(full_path.extension().string());
+        // get file contents
+        std::ostringstream buf;
+        std::ifstream input(full_path.c_str());
+        buf << input.rdbuf();
+        response_body  = buf.str();
+
+        BOOST_LOG_TRIVIAL(info) << "API Retrieving " << full_path.string();
+      }
+    }
+    // fill in response
+    res.result(http::status::ok);
+    res.set(http::field::content_type, content_type);
+    res.body() = response_body;
+    res.prepare_payload();
+  }
+  // Update 
+  else if (method == "PUT") {
+    // TODO: implement PUT
+  }
+  // Delete
+  else if (method == "DELETE") {
+    // TODO: implement DELETE
+  }
+  // Unsupported method
+  else if (method == "HEAD" || method == "CONNECT" || method == "OPTIONS" ||
+      method == "TRACE" || method == "PATCH") {
+    BOOST_LOG_TRIVIAL(error) << "Received Unsupported Request";
+    res.result(http::status::method_not_allowed);
+    res.set(http::field::content_type, "text/html");
+    res.body() = "<html><h1>405 Not Allowed</h1></html>";
+    res.prepare_payload();
+    return false;
+  } 
+  // Bad Request
+  else {
+    BOOST_LOG_TRIVIAL(error) << "Received Bad Request";
+    res.result(http::status::bad_request);
+    res.set(http::field::content_type, "text/html");
+    res.body() = "<html><h1>400 Bad Request</h1></html>";
+    res.prepare_payload();
+    return false;
+  }
+
+  BOOST_LOG_TRIVIAL(info) << "Created Response: " << std::to_string(res.result_int());
+  return true;
+}
+
+bool RequestHandlerAPI::parse_url_target(const http::request<http::string_body> req, 
+    boost::filesystem::path& full_path, int& id) {
+  // construct full file path
+  auto url_sv = req.target();
+  std::string url(url_sv);
+  // this is here to deprecate prefix_length_ in future change
+  int prefix_length = prefix_length_;
+  url = url.substr(prefix_length);
+  full_path = base_path;
+  full_path /= url;
+  // get the request id (if any)
+  size_t pos = url.find_last_of('/');
+  if (pos == std::string::npos) { // "/" not existed in path
+    id = 0;
+  }
+  else {
+    try {
+      id = std::stoi(url.substr(pos + 1)); // convert id to int
+    }
+    catch(std::exception &err) { // path not ended with number
+      id = 0;
+    }
+  }
+  // parse success
+  return true;
 }

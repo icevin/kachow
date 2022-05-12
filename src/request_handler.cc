@@ -201,7 +201,17 @@ bool RequestHandlerAPI::get_response(const http::request<http::string_body> req,
   }
   // Delete
   else if (method == "DELETE") {
-    // TODO: implement DELETE
+    // file not found or not regular file, returns 204 (no content)
+    if (!fs::exists(full_path) || !fs::is_regular_file(full_path)) {
+      BOOST_LOG_TRIVIAL(error) << "API DELETE: no content for " << full_path.string();
+      res.result(http::status::no_content);
+      res.prepare_payload();
+      return false;
+    } 
+    fs::remove(full_path);
+    res.result(http::status::ok);
+    BOOST_LOG_TRIVIAL(error) << "API DELETE: removed " << full_path.string();
+    res.prepare_payload();
   }
   // Unsupported method
   else if (method == "HEAD" || method == "CONNECT" || method == "OPTIONS" ||

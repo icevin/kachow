@@ -12,7 +12,6 @@
 
 namespace http = boost::beast::http;
 namespace fs = boost::filesystem;
-
 // handles request req by filling in response res with contents of
 // req as a string, returns true to indicate success 
 bool RequestHandlerEcho::get_response(const http::request<http::string_body> req, 
@@ -121,8 +120,82 @@ bool RequestHandlerNotFound::get_response(const http::request<http::string_body>
     BOOST_LOG_TRIVIAL(info) << "Created Response: 404 Not Found";
     return true;
 }
-
-
+// helper function, set res to 404 not found
+void RequestHandlerAPI::set_notfound_request(http::response<http::string_body>& res)
+{
+  res.result(http::status::not_found);
+  res.set(http::field::content_type, "text/html");
+  res.body() = "<html><h1>404 Not Found</h1></html>";
+  res.prepare_payload();
+}
+// helper function, set res to 400 bad request
+void RequestHandlerAPI::set_bad_request(http::response<http::string_body>& res)
+{
+  res.result(http::status::bad_request);
+  res.set(http::field::content_type, "text/html");
+  res.body() = "<html><h1>400 Bad Request</h1></html>";
+  res.prepare_payload();
+}
+// given entity, return next available ID
+int RequestHandlerAPI::get_next_id(std::string entity)
+{
+  int id = 1;
+  // when call this function, the map must have key of entity, no need to check
+  std::map<std::string, std::set<int>>::iterator entityIter = entity_id_map_->find(entity); 
+  // current IDs for the entity
+  std::set<int> existingIDs = entityIter -> second; 
+  // loop to find next available ID
+  while(existingIDs.find(id) != existingIDs.end())
+    id++;
+  // update map
+  existingIDs.insert(id);
+  entityIter -> second = existingIDs;
+  return id;
+}
+// erase the entity with id from the map if it exist
+void RequestHandlerAPI::erase_if_exist(std::string entity, int id)
+{
+  std::map<std::string, std::set<int>>::iterator entityIter = entity_id_map_->find(entity); 
+  // if entity exist
+  if(entityIter != entity_id_map_ -> end())
+  {
+    std::set<int> existingIDs = entityIter -> second; 
+    std::set<int>::iterator it = existingIDs.find(id);
+    // if id exist
+    if(it != existingIDs.end())
+    {
+      // erase and update
+      existingIDs.erase(id);
+      entityIter -> second = existingIDs;
+    }
+  }
+}
+// insert the entity with id to the map if it does not exist
+void RequestHandlerAPI::insert_if_notexist(std::string entity, int id)
+{
+  std::map<std::string, std::set<int>>::iterator entityIter = entity_id_map_->find(entity); 
+  // if entity exists
+  if(entityIter != entity_id_map_ -> end())
+  {
+    std::set<int> existingIDs = entityIter -> second; 
+    std::set<int>::iterator it = existingIDs.find(id);
+    // if id does not exist
+    if(it == existingIDs.end())
+    {
+      // insert and update
+      existingIDs.insert(id);
+      entityIter -> second = existingIDs;
+    }
+  }
+  // if entity does not exist
+  else
+  {
+    // create set of ID, insert, and add to the map
+    std::set<int> existingIDs;
+    existingIDs.insert(id);
+    entity_id_map_->insert(std::pair<std::string,std::set<int>>(entity, existingIDs));
+  }
+}
 bool RequestHandlerAPI::get_response(const http::request<http::string_body> req, 
     http::response<http::string_body>& res) {
   BOOST_LOG_TRIVIAL(info) << "Serving API Request";
@@ -132,28 +205,35 @@ bool RequestHandlerAPI::get_response(const http::request<http::string_body> req,
   std::string method(method_sv);
   // declare variables
   int id = 0;
+  // full local path
   fs::path full_path;
   std::string content_type;
   std::string response_body = "";
-  // parse url path
-  parse_url_target(req, full_path, id);
+  // entity name (eg Shoes)
+  std::string entity;
+  // parse url path, set id and entity
+  if(!parse_url_target(req, full_path, id, entity))
+  {
+    BOOST_LOG_TRIVIAL(error) << "404 Not Found: " << full_path.string();
+    set_notfound_request(res);
+    return false;
+  }
   // Create
   if (method == "POST") {
     // returns 400 full_path not 1 level lower than root
     if (full_path.parent_path() != base_path) {
-      res.result(http::status::bad_request);
-      res.set(http::field::content_type, "text/html");
-      res.body() = "<html><h1>400 Bad Request</h1></html>";
-      res.prepare_payload();
       BOOST_LOG_TRIVIAL(error) << "API posting: bad target: " << full_path.string() << std::endl;
+      set_bad_request(res);
       return false;
     }
     // create entity if not already exists
     if (!fs::exists(full_path)) {
       fs::create_directory(full_path);
+      std::set<int> newIDs;
+      entity_id_map_->insert(std::pair<std::string,std::set<int>>(entity, newIDs));
     }
-    // TODO: get id
-    id = 0;
+    // get available id and create file
+    id = get_next_id(entity);
     full_path /= std::to_string(id);
     // create entity file
     fs::ofstream entity(full_path);
@@ -169,24 +249,34 @@ bool RequestHandlerAPI::get_response(const http::request<http::string_body> req,
   else if (method == "GET") {
     // List
     if (id == 0) {
-      // path not found, return 494
+      // path not found, return 404
       if (!fs::exists(full_path)) {
         BOOST_LOG_TRIVIAL(error) << "404 Not Found: " << full_path.string();
-        res.result(http::status::not_found);
-        res.set(http::field::content_type, "text/html");
-        res.body() = "<html><h1>404 Not Found</h1></html>";
-        res.prepare_payload();
+        set_notfound_request(res);
         return false;
       } 
-      // iterate through all regular files
-      for (const auto & entry : fs::directory_iterator(full_path)){
-        if (fs::is_regular_file(entry.status())) {
-          // TODO: implement List 
+      std::string response  = "Current id with entity: " + entity + " are: [";
+      std::map<std::string, std::set<int>>::iterator it = entity_id_map_->find(entity);  
+      // if entity exists
+      if (it != entity_id_map_->end()) {
+        // go over IDs and add to response
+			  std::set<int> IDs = it -> second; 
+        for(int ID:IDs)
+        {
+          response += std::to_string(ID) + ",";
         }
+        // removing the trailing ','
+        response = response.substr(0, response.length()-1);
+        response += "]";
+		  }
+      // entity does not exists in the map
+      else
+      {
+        response = "Entity: " + entity + " is currently empty！"; 
       }
       // set content type
-      content_type = "application/json";
-      // convert json array to string
+      content_type = "text/plain";
+      response_body = response;
       BOOST_LOG_TRIVIAL(info) << "API listing " << full_path.string() << std::endl;
     }
     // Retrive 
@@ -194,10 +284,8 @@ bool RequestHandlerAPI::get_response(const http::request<http::string_body> req,
       // file not found, return 404
       if (!fs::exists(full_path) || !fs::is_regular_file(full_path)) {
         BOOST_LOG_TRIVIAL(error) << "404 Not Found: " << full_path.string();
-        res.result(http::status::not_found);
-        res.set(http::field::content_type, "text/html");
-        res.body() = "<html><h1>404 Not Found</h1></html>";
-        res.prepare_payload();
+        set_notfound_request(res);
+        erase_if_exist(entity, id);
         return false;
       } 
       // file found, get file
@@ -209,7 +297,7 @@ bool RequestHandlerAPI::get_response(const http::request<http::string_body> req,
         std::ifstream input(full_path.c_str());
         buf << input.rdbuf();
         response_body  = buf.str();
-
+        insert_if_notexist(entity, id);
         BOOST_LOG_TRIVIAL(info) << "API Retrieving " << full_path.string();
       }
     }
@@ -224,34 +312,37 @@ bool RequestHandlerAPI::get_response(const http::request<http::string_body> req,
     // return 404 if path is not an existing regular file
     if (!fs::exists(full_path) || !fs::is_regular_file(full_path)) {
       BOOST_LOG_TRIVIAL(error) << "API PUT: not found for " << full_path.string();
-      res.result(http::status::not_found);
-      res.set(http::field::content_type, "text/html");
-      res.body() = "<html><h1>404 Not Found</h1></html>";
-      res.prepare_payload();
+      set_notfound_request(res);
+      erase_if_exist(entity, id);
     }
-    // overwrite entity file
-    fs::ofstream entity(full_path);
-    entity << req.body();
-    entity.close();
-    // construct 200 ok message
-    res.result(http::status::ok);
-    res.prepare_payload();
-    BOOST_LOG_TRIVIAL(info) << "API putting " << full_path.string() << std::endl;
+    else
+    {
+      // overwrite entity file
+      fs::ofstream entityFile(full_path);
+      entityFile << req.body();
+      entityFile.close();
+      // construct 200 ok message
+      res.result(http::status::ok);
+      res.prepare_payload();
+      insert_if_notexist(entity, id);
+      BOOST_LOG_TRIVIAL(info) << "API putting " << full_path.string() << std::endl;
+    }
   }
   // Delete
   else if (method == "DELETE") {
     // file not found or not regular file, returns 404 (not found)
     if (!fs::exists(full_path) || !fs::is_regular_file(full_path)) {
       BOOST_LOG_TRIVIAL(error) << "API DELETE: not found for " << full_path.string();
-      res.result(http::status::not_found);
-      res.set(http::field::content_type, "text/html");
-      res.body() = "<html><h1>404 Not Found</h1></html>";
-      res.prepare_payload();
+      set_notfound_request(res);
     } 
-    fs::remove(full_path);
-    res.result(http::status::ok);
-    BOOST_LOG_TRIVIAL(error) << "API DELETE: removed " << full_path.string();
-    res.prepare_payload();
+    else
+    {
+      fs::remove(full_path);
+      res.result(http::status::ok);
+      BOOST_LOG_TRIVIAL(error) << "API DELETE: removed " << full_path.string();
+      res.prepare_payload();
+    }
+    erase_if_exist(entity, id);
   }
   // Unsupported method
   else if (method == "HEAD" || method == "CONNECT" || method == "OPTIONS" ||
@@ -266,10 +357,7 @@ bool RequestHandlerAPI::get_response(const http::request<http::string_body> req,
   // Bad Request
   else {
     BOOST_LOG_TRIVIAL(error) << "Received Bad Request";
-    res.result(http::status::bad_request);
-    res.set(http::field::content_type, "text/html");
-    res.body() = "<html><h1>400 Bad Request</h1></html>";
-    res.prepare_payload();
+    set_bad_request(res);
     return false;
   }
 
@@ -278,26 +366,48 @@ bool RequestHandlerAPI::get_response(const http::request<http::string_body> req,
 }
 
 bool RequestHandlerAPI::parse_url_target(const http::request<http::string_body> req, 
-    boost::filesystem::path& full_path, int& id) {
+    boost::filesystem::path& full_path, int& id, std::string& entity) {
   // construct full file path
   auto url_sv = req.target();
   std::string url(url_sv);
   // this is here to deprecate prefix_length_ in future change
   int prefix_length = prefix_length_;
+  // url should be something like /Shoes/1
   url = url.substr(prefix_length);
+  BOOST_LOG_TRIVIAL(debug) << "CURD url is" << url;
+  // remove the leading /
+  if(url[0] != '/')
+  {
+    BOOST_LOG_TRIVIAL(warning) << "CURD url entity not starting with /";
+    id = 0;
+    entity = "";
+    return false;
+  }
+  // remove the trailing / if exists
+  if(url.back() == '/')
+  {
+    BOOST_LOG_TRIVIAL(debug) << "CURD removing trailing slash..." << entity;
+    url = url.substr(0, url.length()-1);
+  }
   full_path = base_path;
   full_path /= url;
+  //full path is not /api/Shoes/1
   // get the request id (if any)
   size_t pos = url.find_last_of('/');
-  if (pos == std::string::npos) { // "/" not existed in path
+  if (pos == std::string::npos) { // "/" not existed in path, we only got entity
+    // BOOST_LOG_TRIVIAL(warning) << "CURD url entity not exists";
     id = 0;
+    entity = url;
+    return false;
   }
-  else {
+  else { // we have entity and ID
     try {
       id = std::stoi(url.substr(pos + 1)); // convert id to int
+      entity = url.substr(1, pos - 1);
     }
     catch(std::exception &err) { // path not ended with number
       id = 0;
+      entity = url.substr(1);
     }
   }
   // parse success

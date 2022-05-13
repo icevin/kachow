@@ -1,7 +1,8 @@
 #pragma once
-
 #include <boost/beast/http.hpp>
 #include <boost/filesystem.hpp>
+#include <map>
+#include <set>
 
 namespace http = boost::beast::http;
 
@@ -42,17 +43,27 @@ class RequestHandlerNotFound : public RequestHandler {
 
 class RequestHandlerAPI : public RequestHandler {
  public:
-  RequestHandlerAPI(std::string data_path, int prefix_length)
-    : base_path(data_path), prefix_length_{prefix_length} {};
+  RequestHandlerAPI(std::string data_path, int prefix_length,  std::map<std::string, std::set<int>>* entity_id_map)
+    : base_path(data_path), entity_id_map_(entity_id_map), prefix_length_{prefix_length} {};
 
   virtual bool get_response(const http::request<http::string_body> req, 
     http::response<http::string_body>& res);
 
  private:
   // parse url target, returns request id (or 0 if none)
-  bool parse_url_target(const http::request<http::string_body> req, 
-    boost::filesystem::path& full_path, int& id);
-    
+  bool parse_url_target(const http::request<http::string_body> req, boost::filesystem::path& full_path, int& id, std::string& entity);
+  // given entity, return next available ID
+  int get_next_id(std::string entity);
+  // helper function, set res to 400 bad request
+  void set_bad_request(http::response<http::string_body>& res);
+  // helper function, set res to 404 not found
+  void set_notfound_request(http::response<http::string_body>& res);
+  // erase the entity with id from the map if it exist
+  void erase_if_exist(std::string entity, int id);
+  // insert the entity with id to the map if it does not exist
+  void insert_if_notexist(std::string entity, int id);
   boost::filesystem::path base_path;
   int prefix_length_;
+  // map with key = entity name, value = set of IDs
+  std::map<std::string, std::set<int>>* entity_id_map_;
 };

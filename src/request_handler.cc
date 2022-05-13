@@ -139,7 +139,31 @@ bool RequestHandlerAPI::get_response(const http::request<http::string_body> req,
   parse_url_target(req, full_path, id);
   // Create
   if (method == "POST") {
-    // TODO: implement POST
+    // returns 400 full_path not 1 level lower than root
+    if (full_path.parent_path() != base_path) {
+      res.result(http::status::bad_request);
+      res.set(http::field::content_type, "text/html");
+      res.body() = "<html><h1>400 Bad Request</h1></html>";
+      res.prepare_payload();
+      BOOST_LOG_TRIVIAL(error) << "API posting: bad target: " << full_path.string() << std::endl;
+      return false;
+    }
+    // create entity if not already exists
+    if (!fs::exists(full_path)) {
+      fs::create_directory(full_path);
+    }
+    // TODO: get id
+    id = 0;
+    full_path /= std::to_string(id);
+    // create entity file
+    fs::ofstream entity(full_path);
+    entity << req.body();
+    entity.close();
+    // construct 201 Created message
+    res.result(http::status::created);
+    res.body() = "{\"id\": " + std::to_string(id) + "}";
+    res.prepare_payload();
+    BOOST_LOG_TRIVIAL(info) << "API posting " << full_path.string() << std::endl;
   }
   // Retrieve or List
   else if (method == "GET") {
@@ -197,16 +221,32 @@ bool RequestHandlerAPI::get_response(const http::request<http::string_body> req,
   }
   // Update 
   else if (method == "PUT") {
-    // TODO: implement PUT
+    // return 404 if path is not an existing regular file
+    if (!fs::exists(full_path) || !fs::is_regular_file(full_path)) {
+      BOOST_LOG_TRIVIAL(error) << "API PUT: not found for " << full_path.string();
+      res.result(http::status::not_found);
+      res.set(http::field::content_type, "text/html");
+      res.body() = "<html><h1>404 Not Found</h1></html>";
+      res.prepare_payload();
+    }
+    // overwrite entity file
+    fs::ofstream entity(full_path);
+    entity << req.body();
+    entity.close();
+    // construct 200 ok message
+    res.result(http::status::ok);
+    res.prepare_payload();
+    BOOST_LOG_TRIVIAL(info) << "API putting " << full_path.string() << std::endl;
   }
   // Delete
   else if (method == "DELETE") {
-    // file not found or not regular file, returns 204 (no content)
+    // file not found or not regular file, returns 404 (not found)
     if (!fs::exists(full_path) || !fs::is_regular_file(full_path)) {
-      BOOST_LOG_TRIVIAL(error) << "API DELETE: no content for " << full_path.string();
-      res.result(http::status::no_content);
+      BOOST_LOG_TRIVIAL(error) << "API DELETE: not found for " << full_path.string();
+      res.result(http::status::not_found);
+      res.set(http::field::content_type, "text/html");
+      res.body() = "<html><h1>404 Not Found</h1></html>";
       res.prepare_payload();
-      return false;
     } 
     fs::remove(full_path);
     res.result(http::status::ok);

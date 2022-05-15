@@ -211,13 +211,22 @@ TEST_F(APITest, GETSuccessTest2) {
   EXPECT_EQ(res.result_int(), 200);
 }
 
-TEST_F(APITest, PUTNotFoundTest) {
+TEST_F(APITest, PUTCreateTest) {
   http::request<http::string_body> req(http::verb::put, "/test/1", 11);
   http::response<http::string_body> res;
   bool status = API_handler->get_response(req, res);
 
   EXPECT_TRUE(status);
-  EXPECT_EQ(res.result_int(), 404);
+  EXPECT_EQ(res.result_int(), 200);
+}
+
+TEST_F(APITest, PUTNotFoundTest) {
+  http::request<http::string_body> req(http::verb::put, "/test/test/1", 11);
+  http::response<http::string_body> res;
+  bool status = API_handler->get_response(req, res);
+
+  EXPECT_FALSE(status);
+  EXPECT_EQ(res.result_int(), 400);
 }
 
 TEST_F(APITest, PUTSuccessFoundTest) {
@@ -238,7 +247,7 @@ TEST_F(APITest, DELETENotFoundTest) {
   http::response<http::string_body> res;
   bool status = API_handler->get_response(req, res);
 
-  EXPECT_TRUE(status);
+  EXPECT_FALSE(status);
   EXPECT_EQ(res.result_int(), 404);
 }
 

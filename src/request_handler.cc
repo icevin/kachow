@@ -271,7 +271,7 @@ bool RequestHandlerAPI::get_response(const http::request<http::string_body> req,
       // entity does not exists in the map
       else
       {
-        response = "Entity: " + entity + " is currently empty！"; 
+        response = "Entity: " + entity + " is currently empty!"; 
       }
       // set content type
       content_type = "text/plain";
@@ -305,15 +305,19 @@ bool RequestHandlerAPI::get_response(const http::request<http::string_body> req,
   }
   // Update 
   else if (method == "PUT") {
-    // return 404 if path is not an existing regular file
-    if (!file->exists(full_path) || !file->is_regular_file(full_path)) {
-      BOOST_LOG_TRIVIAL(error) << "API PUT: not found for " << full_path.string();
-      set_notfound_request(res);
-      erase_if_exist(entity, id);
+    // return 400 if id not specified or full_path's grandparent folder is not base path
+    if (id == 0 || full_path.parent_path().parent_path() != base_path) {
+      BOOST_LOG_TRIVIAL(error) << "API PUT: path not supported " << full_path.string();
+      set_bad_request(res);
+      return false;
     }
     else
     {
-      // overwrite entity file
+      // create entity if not already exists
+      if (!file->exists(full_path.parent_path())) {
+        file->create_directory(full_path.parent_path());
+      }
+      // write to entity file
       file->write_file(full_path, req.body());
       // construct 200 ok message
       res.result(http::status::ok);
@@ -328,6 +332,7 @@ bool RequestHandlerAPI::get_response(const http::request<http::string_body> req,
     if (!file->exists(full_path) || !file->is_regular_file(full_path)) {
       BOOST_LOG_TRIVIAL(error) << "API DELETE: not found for " << full_path.string();
       set_notfound_request(res);
+      return false;
     } 
     else
     {

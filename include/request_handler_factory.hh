@@ -33,7 +33,7 @@ class NotFoundHandlerFactory : public RequestHandlerFactory{
 
 class APIHandlerFactory : public RequestHandlerFactory{
  public:
-  APIHandlerFactory(std::string root_file_path) : root_file_path_(root_file_path) {
+  APIHandlerFactory(std::string root_file_path, FileSystem* fs) : root_file_path_(root_file_path), fs(fs){
   if(!scanFS())
   {
     BOOST_LOG_TRIVIAL(warning) << "CURD init root path not exist, created." << root_file_path;
@@ -49,4 +49,5 @@ class APIHandlerFactory : public RequestHandlerFactory{
   std::string root_file_path_;
   // map with key = entity name, value = set of IDs
   std::map<std::string, std::set<int>> entity_id_map;
+  FileSystem* fs;
 };

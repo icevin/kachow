@@ -10,6 +10,7 @@
 
 #include "server.hh"
 #include "session.hh"
+#include "filesystem.hh"
 
 #include <csignal>
 #include <cstdlib>
@@ -92,7 +93,8 @@ int main(int argc, char* argv[]) {
     server s(io_service, portNumber);
     BOOST_LOG_TRIVIAL(info) << "Successfully started server on port " << portNumber;
 
-    server::generate_routes(&config);
+    FileSystem* fs = new RealFileSsystem();
+    server::generate_routes(&config, fs);
 
     io_service.run();
   }

@@ -52,7 +52,7 @@ int server::test_handle_accept(session* new_session,
 
 // Creates a map from locations (e.g. /static or /echo )
 // to RequestHandlerFactory pointers
-void server::generate_routes(NginxConfig* config) {
+void server::generate_routes(NginxConfig* config, FileSystem* fs) {
     std::map<std::string, RequestHandlerFactory*> routes;
     for (const auto& statement : config->statements_) {
         if (statement->tokens_[0] == "server") {
@@ -74,7 +74,7 @@ void server::generate_routes(NginxConfig* config) {
                     if (name == "APIHandler") {
                         std::string root_file_path = sub_statement->child_block_->statements_[0]->tokens_[1];
                         routes.insert(std::pair<std::string, RequestHandlerFactory*>(
-                            location, new APIHandlerFactory(root_file_path)));
+                            location, new APIHandlerFactory(root_file_path, fs)));
                     }
                 }
             }

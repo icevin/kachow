@@ -120,6 +120,7 @@ bool RequestHandlerNotFound::get_response(const http::request<http::string_body>
     BOOST_LOG_TRIVIAL(info) << "Created Response: 404 Not Found";
     return true;
 }
+
 // helper function, set res to 404 not found
 void RequestHandlerAPI::set_notfound_request(http::response<http::string_body>& res)
 {
@@ -227,8 +228,8 @@ bool RequestHandlerAPI::get_response(const http::request<http::string_body> req,
       return false;
     }
     // create entity if not already exists
-    if (!fs::exists(full_path)) {
-      fs::create_directory(full_path);
+    if (!file->exists(full_path)) {
+      file->create_directory(full_path);
       std::set<int> newIDs;
       entity_id_map_->insert(std::pair<std::string,std::set<int>>(entity, newIDs));
     }
@@ -236,9 +237,7 @@ bool RequestHandlerAPI::get_response(const http::request<http::string_body> req,
     id = get_next_id(entity);
     full_path /= std::to_string(id);
     // create entity file
-    fs::ofstream entity(full_path);
-    entity << req.body();
-    entity.close();
+    file->write_file(full_path, req.body());
     // construct 201 Created message
     res.result(http::status::created);
     res.body() = "{\"id\": " + std::to_string(id) + "}";
@@ -250,7 +249,7 @@ bool RequestHandlerAPI::get_response(const http::request<http::string_body> req,
     // List
     if (id == 0) {
       // path not found, return 404
-      if (!fs::exists(full_path)) {
+      if (!file->exists(full_path)) {
         BOOST_LOG_TRIVIAL(error) << "404 Not Found: " << full_path.string();
         set_notfound_request(res);
         return false;
@@ -282,7 +281,7 @@ bool RequestHandlerAPI::get_response(const http::request<http::string_body> req,
     // Retrive 
     else {
       // file not found, return 404
-      if (!fs::exists(full_path) || !fs::is_regular_file(full_path)) {
+      if (!file->exists(full_path) || !file->is_regular_file(full_path)) {
         BOOST_LOG_TRIVIAL(error) << "404 Not Found: " << full_path.string();
         set_notfound_request(res);
         erase_if_exist(entity, id);
@@ -293,10 +292,7 @@ bool RequestHandlerAPI::get_response(const http::request<http::string_body> req,
         // get content type
         content_type = extensionToMIME(full_path.extension().string());
         // get file contents
-        std::ostringstream buf;
-        std::ifstream input(full_path.c_str());
-        buf << input.rdbuf();
-        response_body  = buf.str();
+        response_body = file->read_file(full_path);
         insert_if_notexist(entity, id);
         BOOST_LOG_TRIVIAL(info) << "API Retrieving " << full_path.string();
       }
@@ -310,7 +306,7 @@ bool RequestHandlerAPI::get_response(const http::request<http::string_body> req,
   // Update 
   else if (method == "PUT") {
     // return 404 if path is not an existing regular file
-    if (!fs::exists(full_path) || !fs::is_regular_file(full_path)) {
+    if (!file->exists(full_path) || !file->is_regular_file(full_path)) {
       BOOST_LOG_TRIVIAL(error) << "API PUT: not found for " << full_path.string();
       set_notfound_request(res);
       erase_if_exist(entity, id);
@@ -318,9 +314,7 @@ bool RequestHandlerAPI::get_response(const http::request<http::string_body> req,
     else
     {
       // overwrite entity file
-      fs::ofstream entityFile(full_path);
-      entityFile << req.body();
-      entityFile.close();
+      file->write_file(full_path, req.body());
       // construct 200 ok message
       res.result(http::status::ok);
       res.prepare_payload();
@@ -331,13 +325,13 @@ bool RequestHandlerAPI::get_response(const http::request<http::string_body> req,
   // Delete
   else if (method == "DELETE") {
     // file not found or not regular file, returns 404 (not found)
-    if (!fs::exists(full_path) || !fs::is_regular_file(full_path)) {
+    if (!file->exists(full_path) || !file->is_regular_file(full_path)) {
       BOOST_LOG_TRIVIAL(error) << "API DELETE: not found for " << full_path.string();
       set_notfound_request(res);
     } 
     else
     {
-      fs::remove(full_path);
+      file->remove(full_path);
       res.result(http::status::ok);
       BOOST_LOG_TRIVIAL(error) << "API DELETE: removed " << full_path.string();
       res.prepare_payload();

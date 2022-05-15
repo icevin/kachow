@@ -46,7 +46,8 @@ TEST_F(ServerTest, RoutesSmokeTest) {
   NginxConfigParser config_parser;
   NginxConfig config;
   config_parser.Parse("request_handlers_config", &config);
-  server::generate_routes(&config);
+  FileSystem* fs = new FakeFileSsystem();
+  server::generate_routes(&config, fs);
   std::map<std::string, RequestHandlerFactory*> routes = server::get_routes();
 
   EXPECT_EQ(routes.count("/echo"), 1);

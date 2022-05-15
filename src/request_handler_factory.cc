@@ -17,7 +17,7 @@ RequestHandler* NotFoundHandlerFactory::create(std::string location, std::string
 }
 
 RequestHandler* APIHandlerFactory::create(std::string location, std::string request_url) {
-    return new RequestHandlerAPI(this->root_file_path_, location.length(), &(this->entity_id_map));
+    return new RequestHandlerAPI(this->root_file_path_, location.length(), &(this->entity_id_map), this->fs);
 }
 
 void APIHandlerFactory::Insert_ID(fs::directory_entry entry)

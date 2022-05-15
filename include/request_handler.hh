@@ -3,6 +3,7 @@
 #include <boost/filesystem.hpp>
 #include <map>
 #include <set>
+#include "filesystem.hh"
 
 namespace http = boost::beast::http;
 
@@ -43,8 +44,8 @@ class RequestHandlerNotFound : public RequestHandler {
 
 class RequestHandlerAPI : public RequestHandler {
  public:
-  RequestHandlerAPI(std::string data_path, int prefix_length,  std::map<std::string, std::set<int>>* entity_id_map)
-    : base_path(data_path), entity_id_map_(entity_id_map), prefix_length_{prefix_length} {};
+  RequestHandlerAPI(std::string data_path, int prefix_length, std::map<std::string, std::set<int>>* entity_id_map, FileSystem* fs) 
+  : base_path(data_path), entity_id_map_(entity_id_map), prefix_length_(prefix_length), file(fs) {};
 
   virtual bool get_response(const http::request<http::string_body> req, 
     http::response<http::string_body>& res);
@@ -66,4 +67,5 @@ class RequestHandlerAPI : public RequestHandler {
   int prefix_length_;
   // map with key = entity name, value = set of IDs
   std::map<std::string, std::set<int>>* entity_id_map_;
+  FileSystem* file;
 };

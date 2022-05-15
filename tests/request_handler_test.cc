@@ -51,6 +51,26 @@ class NotFoundTest : public ::testing::Test {
 
 };
 
+class APITest : public ::testing::Test {
+ protected:
+  RequestHandlerAPI* API_handler;
+
+  void SetUp() override {
+    mock_id_map = new std::map<std::string, std::set<int>>;
+    fs = new FakeFileSsystem();
+    API_handler = new RequestHandlerAPI(".", 0, mock_id_map, fs);
+  }
+
+  void TearDown() override {
+    delete mock_id_map;
+    delete fs;
+    delete API_handler;
+  }
+
+  std::map<std::string, std::set<int>>* mock_id_map;
+  FileSystem* fs;
+};
+
 TEST_F(EchoTest, SuccessfulEcho) {
   http::request<http::string_body> req(http::verb::get, "/echo", 11);
   http::response<http::string_body> res;
@@ -116,4 +136,141 @@ TEST_F(NotFoundTest, NotFound) {
   EXPECT_TRUE(status);
   EXPECT_EQ(res.result_int(), 404);
   EXPECT_EQ(res.body(), "<html><h1>404 Not Found</h1></html>");
+}
+
+TEST_F(APITest, POSTSuccessTest) {
+  http::request<http::string_body> req(http::verb::post, "/test", 11);
+  http::response<http::string_body> res;
+
+  bool status = API_handler->get_response(req, res);
+
+  EXPECT_TRUE(status);
+  EXPECT_EQ(res.result_int(), 201);
+  EXPECT_EQ(res.body(), "{\"id\": 1}");
+}
+
+TEST_F(APITest, POSTFailTest) {
+  http::request<http::string_body> req(http::verb::post, "", 11);
+  http::response<http::string_body> res;
+  bool status = API_handler->get_response(req, res);
+
+  EXPECT_FALSE(status);
+  EXPECT_EQ(res.result_int(), 404);
+}
+
+TEST_F(APITest, POSTMultipleLevelTest) {
+  http::request<http::string_body> req(http::verb::post, "/test/next", 11);
+  http::response<http::string_body> res;
+  bool status = API_handler->get_response(req, res);
+
+  EXPECT_FALSE(status);
+  EXPECT_EQ(res.result_int(), 400);
+}
+
+TEST_F(APITest, GETPathNotFoundTest) {
+  http::request<http::string_body> req(http::verb::get, "/test/0", 11);
+  http::response<http::string_body> res;
+  bool status = API_handler->get_response(req, res);
+
+  EXPECT_FALSE(status);
+  EXPECT_EQ(res.result_int(), 404);
+}
+
+TEST_F(APITest, GETFileNotFoundTest) {
+  http::request<http::string_body> req(http::verb::get, "/test/1", 11);
+  http::response<http::string_body> res;
+  bool status = API_handler->get_response(req, res);
+
+  EXPECT_FALSE(status);
+  EXPECT_EQ(res.result_int(), 404);
+}
+
+TEST_F(APITest, GETSuccessTest) {
+  http::request<http::string_body> req_post(http::verb::post, "/test", 11);
+  http::response<http::string_body> res_post;
+  API_handler->get_response(req_post, res_post);
+
+  http::request<http::string_body> req(http::verb::get, "/test/1", 11);
+  http::response<http::string_body> res;
+  bool status = API_handler->get_response(req, res);
+
+  EXPECT_TRUE(status);
+  EXPECT_EQ(res.result_int(), 200);
+}
+
+TEST_F(APITest, GETSuccessTest2) {
+  http::request<http::string_body> req_post1(http::verb::post, "/test", 11);
+  http::response<http::string_body> res_post1;
+  API_handler->get_response(req_post1, res_post1);
+
+  http::request<http::string_body> req(http::verb::get, "/test/", 11);
+  http::response<http::string_body> res;
+  bool status = API_handler->get_response(req, res);
+
+  EXPECT_TRUE(status);
+  EXPECT_EQ(res.result_int(), 200);
+}
+
+TEST_F(APITest, PUTNotFoundTest) {
+  http::request<http::string_body> req(http::verb::put, "/test/1", 11);
+  http::response<http::string_body> res;
+  bool status = API_handler->get_response(req, res);
+
+  EXPECT_TRUE(status);
+  EXPECT_EQ(res.result_int(), 404);
+}
+
+TEST_F(APITest, PUTSuccessFoundTest) {
+  http::request<http::string_body> req_post(http::verb::post, "/test", 11);
+  http::response<http::string_body> res_post;
+  API_handler->get_response(req_post, res_post);
+
+  http::request<http::string_body> req(http::verb::put, "/test/1", 11);
+  http::response<http::string_body> res;
+  bool status = API_handler->get_response(req, res);
+
+  EXPECT_TRUE(status);
+  EXPECT_EQ(res.result_int(), 200);
+}
+
+TEST_F(APITest, DELETENotFoundTest) {
+  http::request<http::string_body> req(http::verb::delete_, "/test/1", 11);
+  http::response<http::string_body> res;
+  bool status = API_handler->get_response(req, res);
+
+  EXPECT_TRUE(status);
+  EXPECT_EQ(res.result_int(), 404);
+}
+
+TEST_F(APITest, DELETESuccessFoundTest) {
+  http::request<http::string_body> req_post(http::verb::post, "/test", 11);
+  http::response<http::string_body> res_post;
+  API_handler->get_response(req_post, res_post);
+
+  http::request<http::string_body> req(http::verb::delete_, "/test/1", 11);
+  http::response<http::string_body> res;
+  bool status = API_handler->get_response(req, res);
+
+  EXPECT_TRUE(status);
+  EXPECT_EQ(res.result_int(), 200);
+}
+
+TEST_F(APITest, NotAllowTest) {
+  http::request<http::string_body> req(http::verb::head, "/test", 11);
+  http::response<http::string_body> res;
+  bool status = API_handler->get_response(req, res);
+
+  EXPECT_FALSE(status);
+  EXPECT_EQ(res.result_int(), 405);
+  EXPECT_EQ(res.body(), "<html><h1>405 Not Allowed</h1></html>");
+}
+
+TEST_F(APITest, BadAPIRequestTest) {
+  http::request<http::string_body> req(http::verb::mkcalendar, "/test", 11);
+  http::response<http::string_body> res;
+  bool status = API_handler->get_response(req, res);
+
+  EXPECT_FALSE(status);
+  EXPECT_EQ(res.result_int(), 400);
+  EXPECT_EQ(res.body(), "<html><h1>400 Bad Request</h1></html>");
 }

@@ -3,6 +3,7 @@
 #include "session.hh"
 #include "config_parser.hh"
 #include "request_handler_factory.hh"
+#include "filesystem.hh"
 
 #include <cstdlib>
 #include <iostream>
@@ -18,7 +19,7 @@ class server {
   int test_handle_accept(session* new_session,
       const boost::system::error_code& error);
   static std::map<std::string, RequestHandlerFactory*> get_routes();
-  static void generate_routes(NginxConfig* config);
+  static void generate_routes(NginxConfig* config, FileSystem* fs);
 
  private:
   int start_accept();

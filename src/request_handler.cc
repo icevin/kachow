@@ -254,7 +254,7 @@ bool RequestHandlerAPI::get_response(const http::request<http::string_body> req,
         set_notfound_request(res);
         return false;
       } 
-      std::string response  = "Current id with entity: " + entity + " are: [";
+      std::string response  = "[";
       std::map<std::string, std::set<int>>::iterator it = entity_id_map_->find(entity);  
       // if entity exists
       if (it != entity_id_map_->end()) {

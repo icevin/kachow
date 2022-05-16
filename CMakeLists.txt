@@ -72,6 +72,9 @@ add_test(NAME integration_test
 add_test(NAME 404_test
     COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/tests/404_test.sh
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+add_test(NAME api_test
+    COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/tests/api_test.sh
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
 
 gtest_discover_tests(config_parser_test WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/tests)
 gtest_discover_tests(server_test WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/tests)

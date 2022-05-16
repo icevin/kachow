@@ -1,0 +1,11 @@
+server {
+  listen   8000;
+  location /echo EchoHandler {BAD CODE;}
+  location /static StaticHandler {
+    root ./static;
+  }
+  location /api APIHandler {
+    root ./api;
+  }
+  location / NotFoundHandler;
+}

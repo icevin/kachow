@@ -1,12 +1,12 @@
 #pragma once
 
-#include <boost/filesystem.hpp>
 #include <set>
+#include <boost/filesystem.hpp>
 
 namespace fs = boost::filesystem;
 
 class FileSystem {
-public:
+  public:
     virtual bool exists(const fs::path& p) = 0;
     virtual bool create_directory(const fs::path& p) = 0;
     virtual bool is_regular_file(const fs::path& p) = 0;
@@ -16,7 +16,7 @@ public:
 };
 
 class RealFileSsystem : public FileSystem{
-public:
+  public:
     bool exists(const fs::path& p);
     bool create_directory(const fs::path& p);
     bool is_regular_file(const fs::path& p);
@@ -26,13 +26,13 @@ public:
 };
 
 class FakeFileSsystem : public FileSystem{
-public:
+  public:
     bool exists(const fs::path& p);
     bool create_directory(const fs::path& p);
     bool is_regular_file(const fs::path& p);
     bool remove(const fs::path& p);
     bool write_file(const fs::path& p, const std::string& body);
     std::string read_file(const fs::path& p);
-private:
+  private:
     std::set<std::string> fakeFS;
 };

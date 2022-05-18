@@ -9,66 +9,63 @@ namespace http = boost::beast::http;
 
 using namespace std;
 
-class EchoTest : public ::testing::Test {
- protected:
-  RequestHandlerEcho* echo_handler;
+class EchoTest:public::testing::Test {
+  protected:
+    RequestHandlerEcho* echo_handler;
 
-  void SetUp() override {
-    echo_handler = new RequestHandlerEcho();
-  }
+    void SetUp() override {
+      echo_handler = new RequestHandlerEcho();
+    }
 
-  void TearDown() override {
-    delete echo_handler;
-  }
-
+    void TearDown() override {
+      delete echo_handler;
+    }
 };
 
-class StaticTest : public ::testing::Test {
- protected:
-  RequestHandlerStatic* static_handler;
+class StaticTest:public::testing::Test {
+  protected:
+    RequestHandlerStatic* static_handler;
 
-  void SetUp() override {
-    static_handler = new RequestHandlerStatic(".", 0);
-  }
+    void SetUp() override {
+      static_handler = new RequestHandlerStatic(".", 0);
+    }
 
-  void TearDown() override {
-    delete static_handler;
-  }
-
+    void TearDown() override {
+      delete static_handler;
+    }
 };
 
-class NotFoundTest : public ::testing::Test {
- protected:
-  RequestHandlerNotFound* not_found_handler;
+class NotFoundTest:public::testing::Test {
+  protected:
+    RequestHandlerNotFound* not_found_handler;
 
-  void SetUp() override {
-    not_found_handler = new RequestHandlerNotFound();
-  }
+    void SetUp() override {
+      not_found_handler = new RequestHandlerNotFound();
+    }
 
-  void TearDown() override {
-    delete not_found_handler;
-  }
-
+    void TearDown() override {
+      delete not_found_handler;
+    }
 };
 
-class APITest : public ::testing::Test {
- protected:
-  RequestHandlerAPI* API_handler;
+class APITest:public::testing::Test {
+  protected:
+    RequestHandlerAPI* API_handler;
 
-  void SetUp() override {
-    mock_id_map = new std::map<std::string, std::set<int>>;
-    fs = new FakeFileSsystem();
-    API_handler = new RequestHandlerAPI(".", 0, mock_id_map, fs);
-  }
+    void SetUp() override {
+      mock_id_map = new std::map<std::string, std::set<int>>;
+      fs = new FakeFileSsystem();
+      API_handler = new RequestHandlerAPI(".", 0, mock_id_map, fs);
+    }
 
-  void TearDown() override {
-    delete mock_id_map;
-    delete fs;
-    delete API_handler;
-  }
+    void TearDown() override {
+      delete mock_id_map;
+      delete fs;
+      delete API_handler;
+    }
 
-  std::map<std::string, std::set<int>>* mock_id_map;
-  FileSystem* fs;
+    std::map<std::string, std::set<int>>* mock_id_map;
+    FileSystem* fs;
 };
 
 TEST_F(EchoTest, SuccessfulEcho) {

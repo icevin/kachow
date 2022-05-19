@@ -48,6 +48,7 @@ int session::handle_read(const boost::system::error_code& error,
     BOOST_LOG_TRIVIAL(debug) << "got location from session::match: " << location << "\n";
 
     // Checks if a matching handler exists
+    std::string handler_name = "NA";
     if (routes_.count(location) == 0) {
       BOOST_LOG_TRIVIAL(error) << "Received Invalid Request";
 
@@ -71,9 +72,13 @@ int session::handle_read(const boost::system::error_code& error,
       RequestHandler* handler = factory->create(location, target);
       BOOST_LOG_TRIVIAL(debug) << "created handler using factory\n";
       handler->get_response(request_, response_);
+      handler_name = handler->get_name();
       delete handler;
     }
-    // BOOST_LOG_TRIVIAL(debug) << "Response generated: [" << this->resp << "]\n\n";
+    BOOST_LOG_TRIVIAL(info) << "[ResponseMetrics] {response_code: " << response_.result_int() << ", "
+                                                  "request_path: " << target << ", "
+                                                  "request_handler_name: " << handler_name << ", "
+                                                  "request_ip: " << this->socket().remote_endpoint().address().to_string() << ",}\n";
 
     http::async_write(socket_, response_,
         boost::bind(&session::handle_write, this,

@@ -13,6 +13,7 @@ class RequestHandler {
   public:
     virtual bool get_response(const http::request<http::string_body> req, 
     http::response<http::string_body>& res) = 0;
+    virtual std::string get_name() = 0;
 };
 
 class RequestHandlerEcho: public RequestHandler {
@@ -21,6 +22,7 @@ class RequestHandlerEcho: public RequestHandler {
 
     virtual bool get_response(const http::request<http::string_body> req, 
       http::response<http::string_body>& res);
+    std::string get_name() {return "Echo";};
 };
 
 class RequestHandlerStatic: public RequestHandler {
@@ -30,6 +32,7 @@ class RequestHandlerStatic: public RequestHandler {
 
     virtual bool get_response(const http::request<http::string_body> req, 
       http::response<http::string_body>& res);
+    std::string get_name() {return "Static";};
   
   private:
     boost::filesystem::path base_path;
@@ -42,6 +45,7 @@ class RequestHandlerNotFound : public RequestHandler {
 
     virtual bool get_response(const http::request<http::string_body> req, 
       http::response<http::string_body>& res);
+    std::string get_name() {return "NotFound";};
 };
 
 class RequestHandlerAPI : public RequestHandler {
@@ -51,6 +55,7 @@ class RequestHandlerAPI : public RequestHandler {
 
     virtual bool get_response(const http::request<http::string_body> req, 
       http::response<http::string_body>& res);
+    std::string get_name() {return "API";};
 
   private:
     // parse url target, returns request id (or 0 if none)

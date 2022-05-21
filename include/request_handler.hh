@@ -85,3 +85,12 @@ class RequestHandlerAPI : public RequestHandler {
     std::map<std::string, std::set<int>>* entity_id_map_;
     FileSystem* file;
 };
+
+class RequestHandlerSleep : public RequestHandler {
+ public:
+  RequestHandlerSleep() {};
+
+  virtual bool get_response(const http::request<http::string_body> req, 
+    http::response<http::string_body>& res);
+  std::string get_name() {return "Sleep";};
+};

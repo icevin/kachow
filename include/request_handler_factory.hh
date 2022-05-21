@@ -32,7 +32,6 @@ class NotFoundHandlerFactory: public RequestHandlerFactory {
     NotFoundHandlerFactory() {};
     RequestHandler* create(std::string location, std::string request_url);
 };
-
 class APIHandlerFactory: public RequestHandlerFactory {
   public:
     APIHandlerFactory(std::string root_file_path, FileSystem* fs) : root_file_path_(root_file_path), fs(fs) {
@@ -51,6 +50,12 @@ class APIHandlerFactory: public RequestHandlerFactory {
     // map with key = entity name, value = set of IDs
     std::map<std::string, std::set<int>> entity_id_map;
     FileSystem* fs;
+};
+
+class SleepHandlerFactory : public  RequestHandlerFactory {
+ public:
+  SleepHandlerFactory() {};
+  RequestHandler* create(std::string location, std::string request_url);
 };
 
 class HealthHandlerFactory: public  RequestHandlerFactory {

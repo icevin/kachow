@@ -5,9 +5,13 @@
 #include <iostream>
 #include <string>
 #include <sstream>
+#include <exception>
 #include <boost/beast/http.hpp>
 #include <boost/filesystem.hpp>
 #include <boost/log/trivial.hpp>
+#include <boost/thread/thread.hpp>
+
+#include "mime.hh"
 
 namespace http = boost::beast::http;
 namespace fs = boost::filesystem;
@@ -406,4 +410,22 @@ bool RequestHandlerAPI::parse_url_target(const http::request<http::string_body> 
   }
   // parse success
   return true;
+}
+
+bool RequestHandlerSleep::get_response(const http::request<http::string_body> req,
+                                     http::response<http::string_body>& res) {
+    BOOST_LOG_TRIVIAL(info) << "Sleep Handler Blocking";
+
+    boost::this_thread::sleep(boost::posix_time::seconds(1));
+
+    // 200 OK
+    res.version(11);
+    res.result(http::status::ok);
+    res.set(http::field::content_type, "text/html");
+    res.body() = "<html><h1>Slept for 1 second</h1></html>";
+    // Fill in content length
+    res.prepare_payload();
+
+    BOOST_LOG_TRIVIAL(info) << "Created Response: 200 OK";
+    return true;
 }

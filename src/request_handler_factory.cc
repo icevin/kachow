@@ -68,3 +68,7 @@ bool APIHandlerFactory::scanFS() {
     }
     return true;
 }
+
+RequestHandler* SleepHandlerFactory::create(std::string location, std::string request_url) {
+    return new RequestHandlerSleep();
+}

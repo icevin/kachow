@@ -29,7 +29,7 @@ add_subdirectory(/usr/src/googletest googletest)
 # Enable Boost
 # Use static libraries so binaries can be deployed without a full boost install
 set(Boost_USE_STATIC_LIBS ON)
-find_package(Boost 1.50 REQUIRED COMPONENTS filesystem system log_setup log)
+find_package(Boost 1.50 REQUIRED COMPONENTS filesystem system log_setup log thread)
 message(STATUS "Boost version: ${Boost_VERSION}")
 
 include_directories(include)
@@ -47,20 +47,20 @@ set(THREADS_PREFER_PTHREAD_FLAG TRUE)
 find_package(Threads REQUIRED)
 
 add_executable(server src/server_main.cc)
-target_link_libraries(server session_lib server_lib config_parser_lib Boost::filesystem Boost::system Boost::log_setup Boost::log Threads::Threads)
+target_link_libraries(server session_lib server_lib config_parser_lib Boost::filesystem Boost::system Boost::log_setup Boost::log Boost::thread Threads::Threads)
 
 # TODO(!): Update test executable name, srcs, and deps
 add_executable(config_parser_test tests/config_parser_test.cc)
 target_link_libraries(config_parser_test config_parser_lib gtest_main)
 
 add_executable(server_test tests/server_test.cc)
-target_link_libraries(server_test session_lib server_lib config_parser_lib request_handler_lib Boost::filesystem Boost::log  Boost::system Threads::Threads gtest_main gcov)
+target_link_libraries(server_test session_lib server_lib config_parser_lib request_handler_lib Boost::filesystem Boost::log  Boost::system Threads::Threads Boost::thread gtest_main gcov)
 
 add_executable(session_test tests/session_test.cc)
 target_link_libraries(session_test session_lib server_lib request_handler_lib Boost::log  Boost::filesystem gtest_main gcov)
 
 add_executable(request_handler_test tests/request_handler_test.cc)
-target_link_libraries(request_handler_test request_handler_lib session_lib server_lib config_parser_lib request_handler_lib Boost::log Boost::filesystem Boost::system Threads::Threads gtest_main gcov)
+target_link_libraries(request_handler_test request_handler_lib session_lib server_lib config_parser_lib request_handler_lib Boost::log Boost::filesystem Boost::system Boost::thread Threads::Threads gtest_main gcov)
 
 # add_executable(example_lib_test tests/example_lib_test.cc)
 # target_link_libraries(example_lib_test example_lib gtest_main)
@@ -74,6 +74,9 @@ add_test(NAME 404_test
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
 add_test(NAME api_test
     COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/tests/api_test.sh
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+add_test(NAME multithreading_test
+    COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/tests/multithread_test.sh
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
 
 gtest_discover_tests(config_parser_test WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/tests)

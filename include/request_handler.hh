@@ -25,6 +25,15 @@ class RequestHandlerEcho: public RequestHandler {
     std::string get_name() {return "Echo";};
 };
 
+class RequestHandlerHealth: public RequestHandler {
+  public:
+    RequestHandlerHealth() {};
+
+    virtual bool get_response(const http::request<http::string_body> req, 
+      http::response<http::string_body>& res);
+    std::string get_name() {return "Health";};
+};
+
 class RequestHandlerStatic: public RequestHandler {
   public:
     RequestHandlerStatic(std::string serve_path, int prefix_length) 

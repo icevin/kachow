@@ -76,6 +76,9 @@ void server::generate_routes(NginxConfig* config, FileSystem* fs) {
                         routes.insert(std::pair<std::string, RequestHandlerFactory*>(
                             location, new APIHandlerFactory(root_file_path, fs)));
                     }
+                    if (name == "HealthHandler") {
+                        routes.insert(std::pair<std::string, RequestHandlerFactory*>(location, new HealthHandlerFactory()));
+                    }
                 }
             }
         }

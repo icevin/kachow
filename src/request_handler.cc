@@ -36,6 +36,25 @@ bool RequestHandlerEcho::get_response(const http::request<http::string_body> req
   return true;
 }
 
+// handles request req by filling in response res with OK
+// returns true to indicate success 
+bool RequestHandlerHealth::get_response(const http::request<http::string_body> req, 
+    http::response<http::string_body>& res) {
+  BOOST_LOG_TRIVIAL(info) << "Serving Health Request";
+
+  // fill in health response
+  res.version(11);
+  res.result(http::status::ok);
+  res.set(http::field::content_type, "text/plain");
+  res.body() = "OK";
+
+  // fill in content length
+  res.prepare_payload();
+
+  BOOST_LOG_TRIVIAL(info) << "Created Response: 200 OK";
+  return true;
+}
+
 // handles request req by filling in response res with contents of
 // target file or error message, returns true to indicate 200 response
 // returns false to indicate 400, 404 or 405 response

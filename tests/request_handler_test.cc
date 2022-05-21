@@ -48,6 +48,19 @@ class NotFoundTest:public::testing::Test {
     }
 };
 
+class HealthTest:public::testing::Test {
+  protected:
+    RequestHandlerHealth* health_handler;
+
+    void SetUp() override {
+      health_handler = new RequestHandlerHealth();
+    }
+
+    void TearDown() override {
+      delete health_handler;
+    }
+};
+
 class APITest:public::testing::Test {
   protected:
     RequestHandlerAPI* API_handler;
@@ -133,6 +146,17 @@ TEST_F(NotFoundTest, NotFound) {
   EXPECT_TRUE(status);
   EXPECT_EQ(res.result_int(), 404);
   EXPECT_EQ(res.body(), "<html><h1>404 Not Found</h1></html>");
+}
+
+TEST_F(HealthTest, AnyRequest) {
+  http::request<http::string_body> req(http::verb::get, "/health", 11);
+  http::response<http::string_body> res;
+
+  bool status = health_handler->get_response(req, res);
+
+  EXPECT_TRUE(status);
+  EXPECT_EQ(res.result_int(), 200);
+  EXPECT_EQ(res.body(), "OK");
 }
 
 TEST_F(APITest, POSTSuccessTest) {

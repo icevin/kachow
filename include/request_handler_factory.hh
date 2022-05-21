@@ -52,3 +52,9 @@ class APIHandlerFactory: public RequestHandlerFactory {
     std::map<std::string, std::set<int>> entity_id_map;
     FileSystem* fs;
 };
+
+class HealthHandlerFactory: public  RequestHandlerFactory {
+  public:
+    HealthHandlerFactory() {};
+    RequestHandler* create(std::string location, std::string request_url);
+};

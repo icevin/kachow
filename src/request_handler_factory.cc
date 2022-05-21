@@ -18,6 +18,10 @@ RequestHandler* NotFoundHandlerFactory::create(std::string location, std::string
     return new RequestHandlerNotFound();
 }
 
+RequestHandler* HealthHandlerFactory::create(std::string location, std::string request_url) {
+    return new RequestHandlerHealth();
+}
+
 RequestHandler* APIHandlerFactory::create(std::string location, std::string request_url) {
     return new RequestHandlerAPI(this->root_file_path_, location.length(), &(this->entity_id_map), this->fs);
 }

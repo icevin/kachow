@@ -85,8 +85,23 @@ int session::handle_read(const boost::system::error_code& error,
           boost::asio::placeholders::error));
     return 1;
   } else {
-    delete this;
-    return -1;
+      if (bytes_transferred > 0) {
+        BOOST_LOG_TRIVIAL(error) << "Received Invalid Request";
+
+        response_.version(11);
+        response_.result(http::status::bad_request);
+        response_.set(http::field::content_type, "text/html");
+        response_.body() = "<html><h1>400 Bad Request</h1></html>";
+        response_.prepare_payload();
+
+        BOOST_LOG_TRIVIAL(info) << "Created Response: 400 Bad Request";
+
+        http::async_write(socket_, response_,
+          boost::bind(&session::handle_write, this,
+            boost::asio::placeholders::error));
+      }
+
+      return -1;
   }
 }
 

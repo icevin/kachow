@@ -89,13 +89,20 @@ int main(int argc, char* argv[]) {
       return 1;
     }
 
-    BOOST_LOG_TRIVIAL(info) << "Attempting to start server on port " << portNumber;
-    server s(io_service, portNumber);
-    BOOST_LOG_TRIVIAL(info) << "Successfully started server on port " << portNumber;
+    int numberOfThreads = config.numberOfThreads();
+    if (numberOfThreads == -1) {
+      BOOST_LOG_TRIVIAL(info) << "Thread count not found in config file, defaulting to 1";
+      numberOfThreads = 1;
+    }
+
+    BOOST_LOG_TRIVIAL(info) << "Attempting to start server on port " << portNumber << " with " << numberOfThreads << " threads";
+    server s(io_service, portNumber, numberOfThreads);
 
     FileSystem* fs = new RealFileSsystem();
     server::generate_routes(&config, fs);
 
+    s.run();
+    BOOST_LOG_TRIVIAL(info) << "Successfully started server on port " << portNumber;
     io_service.run();
   }
   catch (std::exception& e) {

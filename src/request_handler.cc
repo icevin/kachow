@@ -416,7 +416,7 @@ bool RequestHandlerSleep::get_response(const http::request<http::string_body> re
                                      http::response<http::string_body>& res) {
     BOOST_LOG_TRIVIAL(info) << "Sleep Handler Blocking";
 
-    boost::this_thread::sleep(boost::posix_time::seconds(1));
+    boost::this_thread::sleep_for(boost::chrono::milliseconds(1000));
 
     // 200 OK
     res.version(11);

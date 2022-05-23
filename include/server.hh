@@ -14,14 +14,16 @@ using boost::asio::ip::tcp;
 
 class server {
  public:
-  server(boost::asio::io_service& io_service, int port);
+  server(boost::asio::io_service& io_service, int port, int num_threads = 1);
   int test_start_accept();
   int test_handle_accept(session* new_session,
       const boost::system::error_code& error);
   static std::map<std::string, RequestHandlerFactory*> get_routes();
   static void generate_routes(NginxConfig* config, FileSystem* fs);
+  void run();
 
  private:
+  int number_threads = 1;
   int start_accept();
   int handle_accept(session* new_session,
       const boost::system::error_code& error);

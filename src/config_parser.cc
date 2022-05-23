@@ -63,6 +63,19 @@ int NginxConfig::portNumber() {
     return -1;
 }
 
+int NginxConfig::numberOfThreads() {
+    for (const auto& statement : statements_) {
+        if (statement->tokens_[0] == "server") {
+            for (const auto& sub_statement : statement->child_block_->statements_) {
+                if (sub_statement->tokens_[0] == "threads") {
+                    return stoi(sub_statement->tokens_[1]);
+                }
+            }
+        }
+    }
+    return -1;
+}
+
 const char* NginxConfigParser::TokenTypeAsString(TokenType type) {
   switch (type) {
     case TOKEN_TYPE_START:         return "TOKEN_TYPE_START";

@@ -1,5 +1,6 @@
 server {
   listen   80;
+  threads 2;
   location /echo EchoHandler;
   location /sleep SleepHandler;
 }

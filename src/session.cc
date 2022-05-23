@@ -26,6 +26,7 @@ tcp::socket& session::socket() {
 }
 
 int session::start() {
+  BOOST_LOG_TRIVIAL(info) << "Session bind";
   http::async_read(socket_, buffer_, request_,
           boost::bind(&session::handle_read, this,
             boost::asio::placeholders::error,

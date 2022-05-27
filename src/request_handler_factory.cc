@@ -72,3 +72,7 @@ bool APIHandlerFactory::scanFS() {
 RequestHandler* SleepHandlerFactory::create(std::string location, std::string request_url) {
     return new RequestHandlerSleep();
 }
+
+RequestHandler* LoginHandlerFactory::create(std::string location, std::string request_url) {
+    return new RequestHandlerLogin(this->root_file_path_);
+}

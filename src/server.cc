@@ -103,6 +103,11 @@ void server::generate_routes(NginxConfig* config, FileSystem* fs) {
                     if (name == "SleepHandler") {
                         routes.insert(std::pair<std::string, RequestHandlerFactory*>(location, new SleepHandlerFactory()));
                     }
+                    if (name == "LoginHandler") {
+                        std::string root_file_path = sub_statement->child_block_->statements_[0]->tokens_[1];
+                        routes.insert(std::pair<std::string, RequestHandlerFactory*>(
+                            location, new LoginHandlerFactory(root_file_path)));
+                    }
                 }
             }
         }

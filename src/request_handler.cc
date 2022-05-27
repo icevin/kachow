@@ -429,3 +429,72 @@ bool RequestHandlerSleep::get_response(const http::request<http::string_body> re
     BOOST_LOG_TRIVIAL(info) << "Created Response: 200 OK";
     return true;
 }
+
+// handles request req by filling in response res with contents of
+// target file or error message, returns true to indicate 200 response
+// returns false to indicate 400, 404 or 405 response
+bool RequestHandlerLogin::get_response(const http::request<http::string_body> req, 
+    http::response<http::string_body>& res) {
+  BOOST_LOG_TRIVIAL(info) << "Serving Login Request";
+
+  // check request method
+  auto method_sv = req.method_string();
+  std::string method(method_sv);
+  if (method != "GET") {
+    if (method == "HEAD" || method == "POST" || method == "PUT" ||
+        method == "DELETE" || method == "CONNECT" || method == "OPTIONS" ||
+        method == "TRACE" || method == "PATCH") {
+      BOOST_LOG_TRIVIAL(error) << "Received Unsupported Request";
+      res.result(http::status::method_not_allowed);
+      res.set(http::field::content_type, "text/html");
+      res.body() = "<html><h1>405 Not Allowed</h1></html>";
+      res.prepare_payload();
+      return false;
+    } else {
+      BOOST_LOG_TRIVIAL(error) << "Received Bad Request";
+      res.result(http::status::bad_request);
+      res.set(http::field::content_type, "text/html");
+      res.body() = "<html><h1>400 Bad Request</h1></html>";
+      res.prepare_payload();
+      return false;
+    }
+  }
+
+  // construct full file path
+  // Note that a lot of this code is repeated from the static handler
+  // However, because we deal with the URL differently, the code is copied here instead of
+  // being part of the parent class since other types of handlers should not have
+  // access to a function performing the serving below
+  boost::filesystem::path full_path = base_path;
+  full_path /= login_path;
+
+  // get file
+  if (!boost::filesystem::exists(full_path) || !boost::filesystem::is_regular_file(full_path)) {
+    // file not found
+    BOOST_LOG_TRIVIAL(error) << "404 Not Found: " << full_path.string();
+    res.result(http::status::not_found);
+    res.set(http::field::content_type, "text/html");
+    res.body() = "<html><h1>404 Not Found</h1></html>";
+    res.prepare_payload();
+    return false;
+  } else {
+    // get content type
+    std::string content_type = extensionToMIME(full_path.extension().string());
+
+    // get file contents
+    std::ostringstream buf;
+    std::ifstream input(full_path.c_str());
+    buf << input.rdbuf();
+    std::string response_body  = buf.str();
+
+    // fill in response
+    res.result(http::status::ok);
+    res.set(http::field::content_type, content_type);
+    res.body() = response_body;
+    res.prepare_payload();
+    BOOST_LOG_TRIVIAL(info) << "Serving " << full_path.string();
+  }
+
+  BOOST_LOG_TRIVIAL(info) << "Created Response: " << std::to_string(res.result_int());
+  return true;
+}

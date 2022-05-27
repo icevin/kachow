@@ -94,3 +94,18 @@ class RequestHandlerSleep : public RequestHandler {
     http::response<http::string_body>& res);
   std::string get_name() {return "Sleep";};
 };
+
+class RequestHandlerLogin: public RequestHandler {
+  public:
+    RequestHandlerLogin(std::string serve_path) 
+      : base_path(serve_path) {};
+
+    virtual bool get_response(const http::request<http::string_body> req, 
+      http::response<http::string_body>& res);
+    std::string get_name() {return "Login";};
+  
+  private:
+    boost::filesystem::path base_path;
+    int prefix_length_;
+    std::string login_path = "/login.html";
+};

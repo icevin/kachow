@@ -81,6 +81,19 @@ class APITest:public::testing::Test {
     FileSystem* fs;
 };
 
+class LoginTest:public::testing::Test {
+  protected:
+    RequestHandlerLogin* login_handler;
+
+    void SetUp() override {
+      login_handler = new RequestHandlerLogin(".");
+    }
+
+    void TearDown() override {
+      delete login_handler;
+    }
+};
+
 TEST_F(EchoTest, SuccessfulEcho) {
   http::request<http::string_body> req(http::verb::get, "/echo", 11);
   http::response<http::string_body> res;
@@ -303,4 +316,29 @@ TEST_F(APITest, BadAPIRequestTest) {
   EXPECT_FALSE(status);
   EXPECT_EQ(res.result_int(), 400);
   EXPECT_EQ(res.body(), "<html><h1>400 Bad Request</h1></html>");
+}
+
+TEST_F(LoginTest, Login404) {
+  http::request<http::string_body> req(http::verb::get, "/login", 11);
+  http::response<http::string_body> res;
+
+  bool status = login_handler->get_response(req, res);
+
+  EXPECT_FALSE(status);
+  EXPECT_EQ(res.result_int(), 404);
+  EXPECT_EQ(res.body(), "<html><h1>404 Not Found</h1></html>");
+}
+
+TEST_F(LoginTest, Login200) {
+  http::request<http::string_body> req(http::verb::get, "/login", 11);
+  http::response<http::string_body> res;
+  // remake the login handler with another path
+  delete login_handler;
+  login_handler = new RequestHandlerLogin("./login");
+
+  bool status = login_handler->get_response(req, res);
+
+  EXPECT_TRUE(status);
+  EXPECT_EQ(res.result_int(), 200);
+  EXPECT_EQ(res.body(), "<html><h1>Success</h1></html>");
 }

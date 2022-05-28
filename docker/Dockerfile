@@ -26,6 +26,9 @@ COPY conf/* conf/
 # Copy static directory
 COPY static/* static/
 
+# Copy login directory
+COPY login/* login/
+
 # Expose some port(s)
 EXPOSE 80
 

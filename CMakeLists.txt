@@ -32,7 +32,11 @@ set(Boost_USE_STATIC_LIBS ON)
 find_package(Boost 1.50 REQUIRED COMPONENTS filesystem system log_setup log thread)
 message(STATUS "Boost version: ${Boost_VERSION}")
 
-include_directories(include)
+# jwt-cpp
+find_package(OpenSSL 1.0.1 REQUIRED)
+add_subdirectory(jwt-cpp jwt-cpp)
+
+include_directories(include jwt-cpp/include)
 
 add_library(session_lib src/session.cc)
 add_library(server_lib src/server.cc)

@@ -30,12 +30,4 @@ steps:
     '-t', 'gcr.io/$PROJECT_ID/kachow:coverage',
     '.'
   ]
-- name: 'gcr.io/cloud-builders/git'
-  entrypoint: 'bash'
-  args:
-  - '-c'
-  - |
-    git config -f .gitmodules submodule.jwt-cpp.url https://source.developers.google.com/p/studied-slate-346920/r/github_cs130-kachow_jwt-cpp
-    git submodule init
-    git submodule update
 images: ['gcr.io/$PROJECT_ID/kachow:base', 'gcr.io/$PROJECT_ID/kachow:latest', 'gcr.io/$PROJECT_ID/kachow:coverage']

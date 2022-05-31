@@ -1,0 +1,10 @@
+h1 {
+    font-family: Helvetica;
+}
+
+p {
+    color: black;
+    font-family: Helvetica;
+    max-width: 2000px;
+    overflow-wrap: break-word;
+}

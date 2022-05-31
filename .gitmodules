@@ -1,3 +1,0 @@
-[submodule "jwt-cpp"]
-	path = jwt-cpp
-	url = https://github.com/cs130-kachow/jwt-cpp.git

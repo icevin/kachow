@@ -5,13 +5,29 @@
   function handleCredentialResponse(response) {
     // process response
     // response.credential is a JWT ID token
-    console.log(response.credential);
+
+    var element = document.getElementById('reply-obj');
+
+    // check if we already generated a token; if so, notify user of the refresh
+    var previous_instance = document.createTextNode('');
+    if (element.innerHTML.length > 0) {
+      previous_instance = document.createTextNode('Refreshed');
+    }
+
+    // clear previous text
+    element.innerHTML = '';
+
+    // add credentials & line breaks
     var tag = document.createElement('p');
     var text = document.createTextNode('Signed in with credential: ' + response.credential);
+    var br = document.createElement("br");
+    var br2 = document.createElement("br");
+
+    tag.appendChild(previous_instance);
+    tag.appendChild(br);
+    tag.appendChild(br2);
     tag.appendChild(text);
-    var element = document.getElementById('reply-obj');
-    // erase whatever is already there
-    element.innerHTML = '';
+
     // add element so credential shows up on page
     element.appendChild(tag);
   }
@@ -25,5 +41,4 @@
 </div>
 <div class="g_id_signin" data-type="standard"></div>
 
-<div id="reply-obj">
-</div>
+<div id="reply-obj"></div>

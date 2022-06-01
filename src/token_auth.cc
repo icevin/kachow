@@ -3,11 +3,14 @@
 #include <string>
 #include <jwt-cpp/jwt.h>
 
-// verifies 'id_token' and gets the user id
-// user id is stored in 'user_id' string parameter, pass in by reference
-// returns true if token has valid signature, correct audience and issuer
-// returns false if any of these checks fail
-bool TokenAuth::get_user_id(std::string id_token, std::string& user_id) {
+// returns the authorization level of a given 'id_token'
+//   - NO_AUTH if token has invalid signature, incorrect or missing claims
+//   - PUBLIC_AUTH if token is valid and email domain is NOT 'g.ucla.edu'
+//   - PRIVATE_AUTH if token is valid and email domain is 'g.ucla.edu'
+
+// sets 'user_id' string reference to the subject claim found in token
+// 'user_id' is unchanged if no subject claim is found
+auth_level TokenAuth::get_auth(std::string id_token, std::string& user_id) {
   try {
     // decode token
     auto decoded_token = jwt::decode(id_token);
@@ -21,7 +24,7 @@ bool TokenAuth::get_user_id(std::string id_token, std::string& user_id) {
     auto aud = decoded_token.get_audience();
     if (aud.find(client_id_) == aud.end()) {
       // client id not found in audience
-      return false;
+      return NO_AUTH;
     }
 
    // check token issuer
@@ -30,15 +33,25 @@ bool TokenAuth::get_user_id(std::string id_token, std::string& user_id) {
     std::string google2 = "https://accounts.google.com";
     if (iss != google1 && iss != google2) {
       // Google is not the issuer
-      return false;
+      return NO_AUTH;
     }
 
     // get user id
-    user_id = decoded_token.get_subject();       
-    return true;
+    user_id = decoded_token.get_subject();
+
+    // get email domain
+    std::string email = decoded_token.get_payload_claim("email").as_string();
+    std::string domain = email.substr(email.find_last_of("@") + 1);
+
+    // return level of authorization
+    if (domain == "g.ucla.edu") {
+      return PRIVATE_AUTH;
+    } else {
+      return PUBLIC_AUTH;
+    }
   } 
   catch (std::exception& e) {
     // verifier throws exeption if token signature is invalid
-    return false;
+    return NO_AUTH;
   }
 }

@@ -29,6 +29,9 @@ COPY static/* static/
 # Copy login directory
 COPY login/* login/
 
+# Copy ssl directory
+COPY ssl/* ssl/
+
 # Expose some port(s)
 EXPOSE 80
 

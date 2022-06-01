@@ -33,7 +33,8 @@ find_package(Boost 1.50 REQUIRED COMPONENTS filesystem system log_setup log thre
 message(STATUS "Boost version: ${Boost_VERSION}")
 
 # jwt-cpp
-find_package(OpenSSL 1.0.1 REQUIRED)
+set(OPENSSL_USE_STATIC_LIBS TRUE)
+find_package(OpenSSL REQUIRED)
 add_subdirectory(jwt-cpp jwt-cpp)
 
 include_directories(include jwt-cpp/include)
@@ -43,7 +44,7 @@ add_library(server_lib src/server.cc)
 add_library(config_parser_lib src/config_parser.cc)
 add_library(request_handler_lib src/request_handler.cc src/request_handler_factory.cc src/filesystem.cc)
 add_library(token_auth_lib src/token_auth.cc)
-target_link_libraries(server_lib session_lib config_parser_lib request_handler_lib token_auth_lib jwt-cpp::jwt-cpp Boost::log)
+target_link_libraries(server_lib session_lib config_parser_lib request_handler_lib token_auth_lib jwt-cpp::jwt-cpp Boost::log OpenSSL::Crypto)
 
 # Include -pthread when compiling
 # https://stackoverflow.com/questions/5395309/how-do-i-force-cmake-to-include-pthread-option-during-compilation

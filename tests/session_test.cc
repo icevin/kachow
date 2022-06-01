@@ -12,8 +12,18 @@ class SessionTest : public ::testing::Test {
   session* s;
 
   void SetUp() override {
+    const char* pk_file = "../ssl/rootCAKey.pem";
+    const char* pem_file = "../ssl/rootCACert.pem";
+    boost::asio::ssl::context ctx(boost::asio::ssl::context::sslv23);
+    ctx.set_options(
+        boost::asio::ssl::context::default_workarounds
+        | boost::asio::ssl::context::no_sslv2
+        | boost::asio::ssl::context::sslv23
+        | boost::asio::ssl::context::single_dh_use);
+    ctx.use_certificate_chain_file(pem_file);
+    ctx.use_private_key_file(pk_file, boost::asio::ssl::context::pem);
     std::map<std::string, RequestHandlerFactory*> routes;
-    s = new session(io, routes);
+    s = new session(io, ctx, routes);
   }
 
 };
@@ -28,13 +38,23 @@ class MatchTest : public ::testing::Test {
   NotFoundHandlerFactory* not_found_factory;
 
   void SetUp() override {
+    const char* pk_file = "../ssl/rootCAKey.pem";
+    const char* pem_file = "../ssl/rootCACert.pem";
+    boost::asio::ssl::context ctx(boost::asio::ssl::context::sslv23);
+    ctx.set_options(
+        boost::asio::ssl::context::default_workarounds
+        | boost::asio::ssl::context::no_sslv2
+        | boost::asio::ssl::context::sslv23
+        | boost::asio::ssl::context::single_dh_use);
+    ctx.use_certificate_chain_file(pem_file);
+    ctx.use_private_key_file(pk_file, boost::asio::ssl::context::pem);
     echo_factory = new EchoHandlerFactory();
     static_factory = new StaticHandlerFactory("./");
     not_found_factory = new NotFoundHandlerFactory();
     routes.insert(std::pair<std::string, RequestHandlerFactory*>("/hello", echo_factory));
     routes.insert(std::pair<std::string, RequestHandlerFactory*>("/hello/world", static_factory));
     routes.insert(std::pair<std::string, RequestHandlerFactory*>("/hi", not_found_factory));
-    s = new session(io, routes);
+    s = new session(io, ctx, routes);
   }
 
   void TearDown() override {

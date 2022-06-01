@@ -10,10 +10,12 @@ class ServerTest : public ::testing::Test {
   }
 
   boost::asio::io_service io;
+  const char* pk_file = "../ssl/rootCAKey.pem";
+  const char* pem_file = "../ssl/rootCACert.pem";
 
   // Avoid port 80 for testing
   int port = 8080;
-  server s = server(io, port);
+  server s = server(io, port, pk_file, pem_file);
 };
 
 /*TEST_F(ServerTest, SuccessfulStartAccept) {

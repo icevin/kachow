@@ -4,7 +4,7 @@ SERVER_PID=$!
 FILE=./api/shoes/1
 sleep 1
 
-curl -v --silent -X POST -H "application/json" -d "{'a': 1}" http://localhost:8000/api/Shoes 2>&1 | grep "< " | sed 's/< //g' > ./postresponse
+curl -k -v --silent -X POST -H "application/json" -d "{'a': 1}" https://localhost/api/Shoes 2>&1 | grep "< " | sed 's/< //g' > ./postresponse
 if ! cmp -s ./postresponse tests/expected_api_201; then
     rm ./postresponse
     rm -rf ./api
@@ -14,7 +14,7 @@ if ! cmp -s ./postresponse tests/expected_api_201; then
 fi
 rm ./postresponse
 
-curl -v --silent -X GET -H "application/json"  http://localhost:8000/api/Shoes/1 2>&1 | grep "< " | sed 's/< //g' > getresponse
+curl -k -v --silent -X GET -H "application/json"  https://localhost/api/Shoes/1 2>&1 | grep "< " | sed 's/< //g' > getresponse
 if ! cmp -s ./getresponse tests/expected_api_200; then
     rm ./getresponse
     rm -rf ./api
@@ -24,7 +24,7 @@ if ! cmp -s ./getresponse tests/expected_api_200; then
 fi
 rm ./getresponse
 
-curl -v --silent -X GET -H "application/json"  http://localhost:8000/api/Shoes/1 > getresponse
+curl -k -v --silent -X GET -H "application/json"  https://localhost/api/Shoes/1 > getresponse
 if ! cmp -s ./getresponse tests/expected_get; then
     rm ./getresponse
     rm -rf ./api
@@ -34,7 +34,7 @@ if ! cmp -s ./getresponse tests/expected_get; then
 fi
 rm ./getresponse
 
-curl -v --silent -X PUT -H "application/json" -d "{'a': 2}" http://localhost:8000/api/Shoes/1 2>&1 | grep "< " | sed 's/< //g' > ./putresponse
+curl -k -v --silent -X PUT -H "application/json" -d "{'a': 2}" https://localhost/api/Shoes/1 2>&1 | grep "< " | sed 's/< //g' > ./putresponse
 if ! cmp -s ./putresponse tests/expected_api_200_2; then
     rm ./putresponse
     rm -rf ./api
@@ -44,7 +44,7 @@ if ! cmp -s ./putresponse tests/expected_api_200_2; then
 fi
 rm ./putresponse
 
-curl -v --silent -X GET -H "application/json"  http://localhost:8000/api/Shoes/1 2>&1 | grep "< " | sed 's/< //g' > getresponse
+curl -k -v --silent -X GET -H "application/json"  https://localhost/api/Shoes/1 2>&1 | grep "< " | sed 's/< //g' > getresponse
 if ! cmp -s ./getresponse tests/expected_api_200; then
     rm ./getresponse
     rm -rf ./api
@@ -54,7 +54,7 @@ if ! cmp -s ./getresponse tests/expected_api_200; then
 fi
 rm ./getresponse
 
-curl -v --silent -X GET -H "application/json"  http://localhost:8000/api/Shoes/1 > getresponse
+curl -k -v --silent -X GET -H "application/json"  https://localhost/api/Shoes/1 > getresponse
 if ! cmp -s ./getresponse tests/expected_put; then
     rm ./getresponse
     rm -rf ./api
@@ -64,7 +64,7 @@ if ! cmp -s ./getresponse tests/expected_put; then
 fi
 rm ./getresponse
 
-curl -v --silent -X DELETE -H "application/json"  http://localhost:8000/api/Shoes/1 2>&1 | grep "< " | sed 's/< //g' > deleteresponse
+curl -k -v --silent -X DELETE -H "application/json"  https://localhost/api/Shoes/1 2>&1 | grep "< " | sed 's/< //g' > deleteresponse
 if ! cmp -s ./deleteresponse tests/expected_api_200_2; then
     rm ./deleteresponse
     rm -rf ./api

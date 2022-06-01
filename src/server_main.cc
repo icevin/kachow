@@ -16,6 +16,7 @@
 #include <cstdlib>
 #include <iostream>
 #include <boost/asio.hpp>
+#include <boost/asio/ssl.hpp>
 #include <boost/bind.hpp>
 #include <boost/log/sinks/text_file_backend.hpp>
 #include <boost/log/trivial.hpp>
@@ -95,8 +96,20 @@ int main(int argc, char* argv[]) {
       numberOfThreads = 1;
     }
 
+    std::string pkFile = config.keyFileName();
+    if (pkFile == "") {
+      BOOST_LOG_TRIVIAL(fatal) << "Private key file not specified in config";
+      return 1;
+    }
+    std::string pemFile = config.certFileName();
+    if (pemFile == "") {
+      BOOST_LOG_TRIVIAL(fatal) << "Certificate file not specified in config";
+      return 1;
+    }
+
     BOOST_LOG_TRIVIAL(info) << "Attempting to start server on port " << portNumber << " with " << numberOfThreads << " threads";
-    server s(io_service, portNumber, numberOfThreads);
+    BOOST_LOG_TRIVIAL(info) << "Private key: " << pkFile << " Certificate: " << pemFile;
+    server s(io_service, portNumber, pkFile.c_str(), pemFile.c_str(), numberOfThreads);
 
     FileSystem* fs = new RealFileSsystem();
     server::generate_routes(&config, fs);

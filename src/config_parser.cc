@@ -76,6 +76,32 @@ int NginxConfig::numberOfThreads() {
     return -1;
 }
 
+std::string NginxConfig::keyFileName() {
+    for (const auto& statement : statements_) {
+        if (statement->tokens_[0] == "server") {
+            for (const auto& sub_statement : statement->child_block_->statements_) {
+                if (sub_statement->tokens_[0] == "pk_file") {
+                    return sub_statement->tokens_[1];
+                }
+            }
+        }
+    }
+    return "";
+}
+
+std::string NginxConfig::certFileName() {
+    for (const auto& statement : statements_) {
+        if (statement->tokens_[0] == "server") {
+            for (const auto& sub_statement : statement->child_block_->statements_) {
+                if (sub_statement->tokens_[0] == "pem_file") {
+                    return sub_statement->tokens_[1];
+                }
+            }
+        }
+    }
+    return "";
+}
+
 const char* NginxConfigParser::TokenTypeAsString(TokenType type) {
   switch (type) {
     case TOKEN_TYPE_START:         return "TOKEN_TYPE_START";

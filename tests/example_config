@@ -1,3 +1,5 @@
 server {
   listen   80;
+  pk_file ssl/rootCAKey.pem;
+  pem_file ssl/rootCACert.pem;
 }

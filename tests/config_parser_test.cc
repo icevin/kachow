@@ -18,6 +18,18 @@ TEST_F(NginxConfigParserTest, ValidPortNumber) {
   EXPECT_EQ(out_config.portNumber(), 80);
 }
 
+TEST_F(NginxConfigParserTest, ValidKeyFile) {
+  bool success = parser.Parse("example_config", &out_config);
+  EXPECT_TRUE(success);
+  EXPECT_EQ(out_config.keyFileName(), "ssl/rootCAKey.pem");
+}
+
+TEST_F(NginxConfigParserTest, ValidCertFile) {
+  bool success = parser.Parse("example_config", &out_config);
+  EXPECT_TRUE(success);
+  EXPECT_EQ(out_config.certFileName(), "ssl/rootCACert.pem");
+}
+
 TEST_F(NginxConfigParserTest, ValidPortNumberAndComment) {
   bool success = parser.Parse("comment_config", &out_config);
   EXPECT_TRUE(success);
@@ -28,6 +40,18 @@ TEST_F(NginxConfigParserTest, InvalidPortNumber) {
   bool success = parser.Parse("invalid_config", &out_config);
   EXPECT_FALSE(success);
   EXPECT_EQ(out_config.portNumber(), -1);
+}
+
+TEST_F(NginxConfigParserTest, InvalidKeyFile) {
+  bool success = parser.Parse("invalid_config", &out_config);
+  EXPECT_FALSE(success);
+  EXPECT_EQ(out_config.keyFileName(), "");
+}
+
+TEST_F(NginxConfigParserTest, InvalidCertFile) {
+  bool success = parser.Parse("invalid_config", &out_config);
+  EXPECT_FALSE(success);
+  EXPECT_EQ(out_config.certFileName(), "");
 }
 
 TEST_F(NginxConfigParserTest, EmptyConfig) {

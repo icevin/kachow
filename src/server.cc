@@ -1,6 +1,7 @@
 #include "server.hh"
 
 #include <boost/asio.hpp>
+#include <boost/asio/ssl.hpp>
 #include <boost/bind.hpp>
 #include <boost/log/trivial.hpp>
 #include <boost/thread.hpp>
@@ -13,10 +14,19 @@ using boost::asio::ip::tcp;
 
 std::map<std::string, RequestHandlerFactory*> server::routes_;
 
-server::server(boost::asio::io_service& io_service, int port, int num_threads)
+server::server(boost::asio::io_service& io_service, int port,
+	const char* pk_file, const char* pem_file, int num_threads)
     : io_service_(io_service),
       acceptor_(io_service, tcp::endpoint(tcp::v4(), port)),
-      number_threads(num_threads) {
+      number_threads(num_threads),
+      context_(boost::asio::ssl::context::sslv23) {
+    context_.set_options(
+        boost::asio::ssl::context::default_workarounds
+        | boost::asio::ssl::context::no_sslv2
+        | boost::asio::ssl::context::sslv23
+        | boost::asio::ssl::context::single_dh_use);
+    context_.use_certificate_chain_file(pem_file);
+    context_.use_private_key_file(pk_file, boost::asio::ssl::context::pem);
     BOOST_LOG_TRIVIAL(info) << "Server class constructed";
 }
 
@@ -25,7 +35,7 @@ void server::run() {
 }
 
 int server::start_accept() {
-    session* new_session = new session(io_service_, server::routes_);
+    session* new_session = new session(io_service_, context_, server::routes_);
     acceptor_.async_accept(new_session->socket(),
                            boost::bind(&server::handle_accept, this, new_session,
                                        boost::asio::placeholders::error));

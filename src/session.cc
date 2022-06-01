@@ -6,6 +6,7 @@
 #include <regex>
 #include <string>
 #include <boost/asio.hpp>
+#include <boost/asio/ssl.hpp>
 #include <boost/beast/http.hpp>
 #include <boost/bind.hpp>
 #include <boost/log/trivial.hpp>
@@ -16,22 +17,34 @@ using boost::asio::ip::tcp;
 
 std::map<std::string, RequestHandlerFactory*> session::routes_;
 
-session::session(boost::asio::io_service& io_service, std::map<std::string, RequestHandlerFactory*> routes)
-    : socket_(io_service) {
+session::session(boost::asio::io_service& io_service, boost::asio::ssl::context& context,
+  std::map<std::string, RequestHandlerFactory*> routes)
+    : socket_(io_service, context) {
   routes_ = routes;
 }
 
-tcp::socket& session::socket() {
-  return socket_;
+ssl_socket::lowest_layer_type& session::socket() {
+  return socket_.lowest_layer();
 }
 
 int session::start() {
-  BOOST_LOG_TRIVIAL(info) << "Session bind";
-  http::async_read(socket_, buffer_, request_,
+  socket_.async_handshake(boost::asio::ssl::stream_base::server,
+    boost::bind(&session::handle_handshake, this,
+      boost::asio::placeholders::error));
+  return 1;
+}
+
+int session::handle_handshake(const boost::system::error_code& error) {
+  if (!error) {
+    http::async_read(socket_, buffer_, request_,
           boost::bind(&session::handle_read, this,
             boost::asio::placeholders::error,
             boost::asio::placeholders::bytes_transferred));
-  return 1;
+    return 1;
+  } else {
+    delete this;
+    return -1;
+  }
 }
 
 int session::handle_read(const boost::system::error_code& error,
@@ -41,9 +54,6 @@ int session::handle_read(const boost::system::error_code& error,
       auto target_sv = request_.target();
       std::string method(method_sv);
       std::string target(target_sv);
-
-      BOOST_LOG_TRIVIAL(info) << method << " " << target << " " << "HTTP/1.1" 
-        << " (" << socket_.remote_endpoint().address().to_string() << ")";
 
     std::string location = session::match(routes_, target);
     BOOST_LOG_TRIVIAL(debug) << "got location from session::match: " << location << "\n";

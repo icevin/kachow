@@ -23,6 +23,8 @@ class NginxConfig {
   std::vector<std::shared_ptr<NginxConfigStatement>> statements_;
   int portNumber(); // returns -1 on failure
   int numberOfThreads(); // returns -1 on failure
+  std::string keyFileName(); // returns empty string on failure
+  std::string certFileName(); // returns empty string on failure
 };
 
 // The driver that parses a config file and generates an NginxConfig.

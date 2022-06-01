@@ -1,6 +1,8 @@
 server {
-  listen   80;
+  listen   443;
   threads 2;
+  pk_file ssl/rootCAKey.pem;
+  pem_file ssl/rootCACert.pem;
   location /echo EchoHandler;
   location /sleep SleepHandler;
 }

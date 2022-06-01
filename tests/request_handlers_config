@@ -1,5 +1,7 @@
 server {
-  listen   80;
+  listen   443;
+  pk_file ssl/rootCAKey.pem;
+  pem_file ssl/rootCACert.pem;
   location /echo EchoHandler {BAD CODE;}
   location /static StaticHandler {
     root ./;

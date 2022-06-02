@@ -1,0 +1,21 @@
+server {
+  listen   443;
+  pk_file ../ssl/private.key;
+  pem_file ../ssl/chain.pem;
+  location /echo EchoHandler;
+  location /static StaticHandler {
+    root ./static;
+  }
+  location /api APIHandler {
+    data_path ./api;
+  }
+  location /s_api SecureAPIHandler {
+    data_path ./s_api;
+    auth_type FAKE;
+  }
+  location /health HealthHandler;
+  location /login LoginHandler {
+    root ./login;
+  }
+  location / NotFoundHandler;
+}

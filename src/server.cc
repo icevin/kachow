@@ -9,6 +9,7 @@
 #include <iostream>
 
 #include "session.hh"
+#include "token_auth.hh"
 
 using boost::asio::ip::tcp;
 
@@ -106,6 +107,27 @@ void server::generate_routes(NginxConfig* config, FileSystem* fs) {
                         std::string root_file_path = sub_statement->child_block_->statements_[0]->tokens_[1];
                         routes.insert(std::pair<std::string, RequestHandlerFactory*>(
                             location, new APIHandlerFactory(root_file_path, fs)));
+                    }
+                    if (name == "SecureAPIHandler") {
+                        if (sub_statement->child_block_->statements_.size() < 2) {
+                            BOOST_LOG_TRIVIAL(fatal) << "Incorrect arguments passed to SecureAPIHandler\n"
+                                                       "Should be: root_file_path <path>;\n"
+                                                       "           auth_type <OAUTH/FAKE> (<client_id> <client_secret>)\n";
+                        }
+                        std::string root_file_path = sub_statement->child_block_->statements_[0]->tokens_[1];
+                        std::string auth_type_str = sub_statement->child_block_->statements_[1]->tokens_[1];
+                        Auth* authorizer;
+                        if (auth_type_str == "OAUTH") {
+                            std::string client_id = sub_statement->child_block_->statements_[1]->tokens_[2];
+                            std::string client_secret = sub_statement->child_block_->statements_[1]->tokens_[3];
+                            authorizer = new TokenAuth(client_id, client_secret);
+                        } else if (auth_type_str == "FAKE") {
+                            authorizer = new FakeAuth();
+                        } else {
+                            BOOST_LOG_TRIVIAL(fatal) << "Invalid Auth Type: Must be OAUTH or FAKE\n";
+                        }
+                        routes.insert(std::pair<std::string, RequestHandlerFactory*>(
+                            location, new SecureAPIHandlerFactory(root_file_path, fs, authorizer)));
                     }
                     if (name == "HealthHandler") {
                         routes.insert(std::pair<std::string, RequestHandlerFactory*>(location, new HealthHandlerFactory()));

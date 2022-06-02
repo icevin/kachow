@@ -69,6 +69,10 @@ bool APIHandlerFactory::scanFS() {
     return true;
 }
 
+RequestHandler* SecureAPIHandlerFactory::create(std::string location, std::string request_url) {
+    return new SecureRequestHandlerAPI(this->root_file_path_, location.length(), &(this->entity_id_map), this->fs, authorizer_);
+}
+
 RequestHandler* SleepHandlerFactory::create(std::string location, std::string request_url) {
     return new RequestHandlerSleep();
 }

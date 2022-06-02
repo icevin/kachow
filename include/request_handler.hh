@@ -1,6 +1,7 @@
 #pragma once
 
 #include "filesystem.hh"
+#include "token_auth.hh"
 
 #include <map>
 #include <set>
@@ -84,6 +85,18 @@ class RequestHandlerAPI : public RequestHandler {
     // map with key = entity name, value = set of IDs
     std::map<std::string, std::set<int>>* entity_id_map_;
     FileSystem* file;
+};
+
+class SecureRequestHandlerAPI : public RequestHandler {
+  public:
+    SecureRequestHandlerAPI(std::string data_path, int prefix_length, std::map<std::string, std::set<int>>* entity_id_map, FileSystem* fs, Auth* authorizer);
+    bool get_response(const http::request<http::string_body> req, 
+      http::response<http::string_body>& res);
+    std::string get_name() {return "SecureAPI";};
+
+  private:
+    RequestHandler* base_request_handler;
+    Auth* authorizer_;
 };
 
 class RequestHandlerSleep : public RequestHandler {

@@ -10,6 +10,7 @@
 #include <boost/filesystem.hpp>
 #include <boost/log/trivial.hpp>
 #include <boost/thread/thread.hpp>
+#include <regex>
 
 #include "mime.hh"
 
@@ -374,6 +375,7 @@ bool RequestHandlerAPI::parse_url_target(const http::request<http::string_body> 
   // this is here to deprecate prefix_length_ in future change
   int prefix_length = prefix_length_;
   // url should be something like /Shoes/1
+  BOOST_LOG_TRIVIAL(debug) << "original CURD url is" << url;
   url = url.substr(prefix_length);
   BOOST_LOG_TRIVIAL(debug) << "CURD url is" << url;
   // remove the leading /
@@ -410,6 +412,75 @@ bool RequestHandlerAPI::parse_url_target(const http::request<http::string_body> 
   }
   // parse success
   return true;
+}
+
+SecureRequestHandlerAPI::SecureRequestHandlerAPI(std::string data_path, 
+      int prefix_length, std::map<std::string, std::set<int>>* entity_id_map, FileSystem* fs, Auth* authorizer) {
+  base_request_handler = new RequestHandlerAPI(data_path, prefix_length, entity_id_map, fs);
+  authorizer_ = authorizer;
+}
+
+bool SecureRequestHandlerAPI::get_response(const http::request<http::string_body> req, 
+      http::response<http::string_body>& res) {
+   // Extract token from url
+   std::string url_string(req.target());
+   BOOST_LOG_TRIVIAL(debug) << "url_string: " << url_string << "\n";
+   std::regex token_regex ("token=(.+)$");
+   std::smatch sm;
+   std::regex_search(url_string, sm, token_regex);
+   std::string token;
+
+   BOOST_LOG_TRIVIAL(debug) << "sm.size(): " << sm.size() << "\n";
+
+   if (sm.size() >= 1) {
+      std::string match(sm[0]);
+      token = match.substr(6, std::string::npos); // 6 comes from the length of "token="
+   } else {
+      res.version(11);
+      res.result(http::status::unauthorized);
+      res.set(http::field::content_type, "text/plain");
+      res.body() = "No token found";
+      res.prepare_payload(); 
+      return true;
+   }
+   BOOST_LOG_TRIVIAL(debug) << "token: " << token << "\n";
+
+  // Check if token is valid
+  // If so, call base_request_handler
+  std::string user_id;
+  auth_level user_auth_level;
+  user_auth_level = authorizer_->get_auth(token, user_id);
+  if (user_auth_level == PRIVATE_AUTH) {
+      int token_start = url_string.find("?");
+      std::string new_target(url_string.substr(0, token_start));
+
+      // Create a new request to pass to the base handler
+      http::request<http::string_body> req2{req.method(), new_target, req.version()};
+      req2.body() = req.body();
+
+      BOOST_LOG_TRIVIAL(debug) << "url_string.size(): " << url_string.size() << "\n";
+      BOOST_LOG_TRIVIAL(debug) << "token_start: " << token_start << "\n";
+      BOOST_LOG_TRIVIAL(debug) << "new target: " << url_string.substr(0, token_start) << "\n";
+
+      bool return_val = base_request_handler->get_response(req2, res);
+      return return_val;
+  }
+  else if (user_auth_level == PUBLIC_AUTH) {
+      res.version(11);
+      res.result(http::status::unauthorized);
+      res.set(http::field::content_type, "text/plain");
+      res.body() = "Only .g.ucla users are permitted";
+      res.prepare_payload(); 
+      return true;
+  }
+  else {
+      res.version(11);
+      res.result(http::status::unauthorized);
+      res.set(http::field::content_type, "text/plain");
+      res.body() = "Invalid token";
+      res.prepare_payload(); 
+      return true;  
+  }
 }
 
 bool RequestHandlerSleep::get_response(const http::request<http::string_body> req,

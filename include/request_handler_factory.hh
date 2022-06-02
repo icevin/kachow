@@ -41,7 +41,7 @@ class APIHandlerFactory: public RequestHandlerFactory {
       }
     };
     RequestHandler* create(std::string location, std::string request_url);
-  private:
+  protected:
     // scan file system, and put entity and ID into the entity_id_map if exists
     // return false if root path does not exist
     bool scanFS();
@@ -51,6 +51,16 @@ class APIHandlerFactory: public RequestHandlerFactory {
     // map with key = entity name, value = set of IDs
     std::map<std::string, std::set<int>> entity_id_map;
     FileSystem* fs;
+
+};
+
+class SecureAPIHandlerFactory: public APIHandlerFactory {
+  public:
+    SecureAPIHandlerFactory(std::string root_file_path, FileSystem* fs, Auth* authorizer) 
+      : authorizer_(authorizer), APIHandlerFactory(root_file_path, fs) {};
+    RequestHandler* create(std::string location, std::string request_url);
+  private:
+    Auth* authorizer_;
 };
 
 class SleepHandlerFactory : public  RequestHandlerFactory {

@@ -55,3 +55,20 @@ auth_level TokenAuth::get_auth(std::string id_token, std::string& user_id) {
     return NO_AUTH;
   }
 }
+
+
+auth_level FakeAuth::get_auth(std::string id_token, std::string& user_id) {
+  if (id_token == "PRIVAUTH1") {
+    user_id = "priv1";
+    return PRIVATE_AUTH;
+  }
+  else if (id_token == "PRIVAUTH2") {
+    user_id = "priv2";
+    return PRIVATE_AUTH;
+  }
+  else if (id_token == "PUBAUTH1") {
+    user_id = "pub1";
+    return PUBLIC_AUTH;
+  }
+  return NO_AUTH;
+}

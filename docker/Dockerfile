@@ -38,8 +38,13 @@ COPY keys/* keys/
 # Expose some port(s)
 EXPOSE 80
 
+RUN mkdir keys > /dev/null 2>&1 || true
+
+# Update certificates
+RUN wget https://www.googleapis.com/oauth2/v1/certs -x -O ./keys/certs.json
+
 # Use ENTRYPOINT to specify the binary name
-ENTRYPOINT ["./server"]
+ENTRYPOINT ["./run.sh"]
 
 # Use CMD to specify arguments to ENTRYPOINT
 CMD ["conf/deploy.conf"]

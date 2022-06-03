@@ -343,7 +343,8 @@ TEST_F(APITest, BadAPIRequestTest) {
 }
 
 TEST_F(SecureAPITest, POSTSuccessTest) {
-  http::request<http::string_body> req(http::verb::post, "/test?token=PRIVAUTH1", 11);
+  http::request<http::string_body> req(http::verb::post, "/test", 11);
+  req.set("token", "PRIVAUTH1");
   http::response<http::string_body> res;
 
   bool status = API_handler->get_response(req, res);
@@ -354,7 +355,8 @@ TEST_F(SecureAPITest, POSTSuccessTest) {
 }
 
 TEST_F(SecureAPITest, POSTFailTest) {
-  http::request<http::string_body> req(http::verb::post, "?token=PRIVAUTH1", 11);
+  http::request<http::string_body> req(http::verb::post, "", 11);
+  req.set("token", "PRIVAUTH1");
   http::response<http::string_body> res;
   bool status = API_handler->get_response(req, res);
 
@@ -363,7 +365,8 @@ TEST_F(SecureAPITest, POSTFailTest) {
 }
 
 TEST_F(SecureAPITest, POSTMultipleLevelTest) {
-  http::request<http::string_body> req(http::verb::post, "/test/next?token=PRIVAUTH1", 11);
+  http::request<http::string_body> req(http::verb::post, "/test/next", 11);
+  req.set("token", "PRIVAUTH1");
   http::response<http::string_body> res;
   bool status = API_handler->get_response(req, res);
 
@@ -372,7 +375,8 @@ TEST_F(SecureAPITest, POSTMultipleLevelTest) {
 }
 
 TEST_F(SecureAPITest, GETPathNotFoundTest) {
-  http::request<http::string_body> req(http::verb::get, "/test/0?token=PRIVAUTH1", 11);
+  http::request<http::string_body> req(http::verb::get, "/test/0", 11);
+  req.set("token", "PRIVAUTH1");
   http::response<http::string_body> res;
   bool status = API_handler->get_response(req, res);
 
@@ -381,7 +385,8 @@ TEST_F(SecureAPITest, GETPathNotFoundTest) {
 }
 
 TEST_F(SecureAPITest, GETFileNotFoundTest) {
-  http::request<http::string_body> req(http::verb::get, "/test/1?token=PRIVAUTH1", 11);
+  http::request<http::string_body> req(http::verb::get, "/test/1", 11);
+  req.set("token", "PRIVAUTH1");
   http::response<http::string_body> res;
   bool status = API_handler->get_response(req, res);
 
@@ -390,11 +395,13 @@ TEST_F(SecureAPITest, GETFileNotFoundTest) {
 }
 
 TEST_F(SecureAPITest, GETSuccessTest) {
-  http::request<http::string_body> req_post(http::verb::post, "/test?token=PRIVAUTH1", 11);
+  http::request<http::string_body> req_post(http::verb::post, "/test", 11);
+  req_post.set("token", "PRIVAUTH1");
   http::response<http::string_body> res_post;
   API_handler->get_response(req_post, res_post);
 
-  http::request<http::string_body> req(http::verb::get, "/test/1?token=PRIVAUTH1", 11);
+  http::request<http::string_body> req(http::verb::get, "/test/1", 11);
+  req.set("token", "PRIVAUTH1");
   http::response<http::string_body> res;
   bool status = API_handler->get_response(req, res);
 
@@ -403,11 +410,13 @@ TEST_F(SecureAPITest, GETSuccessTest) {
 }
 
 TEST_F(SecureAPITest, GETSuccessTest2) {
-  http::request<http::string_body> req_post1(http::verb::post, "/test?token=PRIVAUTH1", 11);
+  http::request<http::string_body> req_post1(http::verb::post, "/test", 11);
+  req_post1.set("token", "PRIVAUTH1");
   http::response<http::string_body> res_post1;
   API_handler->get_response(req_post1, res_post1);
 
-  http::request<http::string_body> req(http::verb::get, "/test/?token=PRIVAUTH1", 11);
+  http::request<http::string_body> req(http::verb::get, "/test/", 11);
+  req.set("token", "PRIVAUTH1");
   http::response<http::string_body> res;
   bool status = API_handler->get_response(req, res);
 
@@ -416,7 +425,8 @@ TEST_F(SecureAPITest, GETSuccessTest2) {
 }
 
 TEST_F(SecureAPITest, PUTCreateTest) {
-  http::request<http::string_body> req(http::verb::put, "/test/1?token=PRIVAUTH1", 11);
+  http::request<http::string_body> req(http::verb::put, "/test/1", 11);
+  req.set("token", "PRIVAUTH1");
   http::response<http::string_body> res;
   bool status = API_handler->get_response(req, res);
 
@@ -425,7 +435,8 @@ TEST_F(SecureAPITest, PUTCreateTest) {
 }
 
 TEST_F(SecureAPITest, PUTNotFoundTest) {
-  http::request<http::string_body> req(http::verb::put, "/test/test/1?token=PRIVAUTH1", 11);
+  http::request<http::string_body> req(http::verb::put, "/test/test/1", 11);
+  req.set("token", "PRIVAUTH1");
   http::response<http::string_body> res;
   bool status = API_handler->get_response(req, res);
 
@@ -434,11 +445,13 @@ TEST_F(SecureAPITest, PUTNotFoundTest) {
 }
 
 TEST_F(SecureAPITest, PUTSuccessFoundTest) {
-  http::request<http::string_body> req_post(http::verb::post, "/test?token=PRIVAUTH1", 11);
+  http::request<http::string_body> req_post(http::verb::post, "/test", 11);
+  req_post.set("token", "PRIVAUTH1");
   http::response<http::string_body> res_post;
   API_handler->get_response(req_post, res_post);
 
-  http::request<http::string_body> req(http::verb::put, "/test/1?token=PRIVAUTH1", 11);
+  http::request<http::string_body> req(http::verb::put, "/test/1", 11);
+  req.set("token", "PRIVAUTH1");
   http::response<http::string_body> res;
   bool status = API_handler->get_response(req, res);
 
@@ -447,7 +460,8 @@ TEST_F(SecureAPITest, PUTSuccessFoundTest) {
 }
 
 TEST_F(SecureAPITest, DELETENotFoundTest) {
-  http::request<http::string_body> req(http::verb::delete_, "/test/1?token=PRIVAUTH1", 11);
+  http::request<http::string_body> req(http::verb::delete_, "/test/1", 11);
+  req.set("token", "PRIVAUTH1");
   http::response<http::string_body> res;
   bool status = API_handler->get_response(req, res);
 
@@ -456,11 +470,13 @@ TEST_F(SecureAPITest, DELETENotFoundTest) {
 }
 
 TEST_F(SecureAPITest, DELETESuccessFoundTest) {
-  http::request<http::string_body> req_post(http::verb::post, "/test?token=PRIVAUTH1", 11);
+  http::request<http::string_body> req_post(http::verb::post, "/test", 11);
+  req_post.set("token", "PRIVAUTH1");
   http::response<http::string_body> res_post;
   API_handler->get_response(req_post, res_post);
 
-  http::request<http::string_body> req(http::verb::delete_, "/test/1?token=PRIVAUTH1", 11);
+  http::request<http::string_body> req(http::verb::delete_, "/test/1", 11);
+  req.set("token", "PRIVAUTH1");
   http::response<http::string_body> res;
   bool status = API_handler->get_response(req, res);
 
@@ -469,7 +485,8 @@ TEST_F(SecureAPITest, DELETESuccessFoundTest) {
 }
 
 TEST_F(SecureAPITest, NotAllowTest) {
-  http::request<http::string_body> req(http::verb::head, "/test?token=PRIVAUTH1", 11);
+  http::request<http::string_body> req(http::verb::head, "/test", 11);
+  req.set("token", "PRIVAUTH1");
   http::response<http::string_body> res;
   bool status = API_handler->get_response(req, res);
 
@@ -479,7 +496,8 @@ TEST_F(SecureAPITest, NotAllowTest) {
 }
 
 TEST_F(SecureAPITest, BadAPIRequestTest) {
-  http::request<http::string_body> req(http::verb::mkcalendar, "/test?token=PRIVAUTH1", 11);
+  http::request<http::string_body> req(http::verb::mkcalendar, "/test", 11);
+  req.set("token", "PRIVAUTH1");
   http::response<http::string_body> res;
   bool status = API_handler->get_response(req, res);
 
@@ -489,7 +507,8 @@ TEST_F(SecureAPITest, BadAPIRequestTest) {
 }
 
 TEST_F(SecureAPITest, AuthFailTest) {
-  http::request<http::string_body> req(http::verb::post, "/test?token=BADTOKEN", 11);
+  http::request<http::string_body> req(http::verb::post, "/test", 11);
+  req.set("token", "BADTOKEN");
   http::response<http::string_body> res;
 
   bool status = API_handler->get_response(req, res);

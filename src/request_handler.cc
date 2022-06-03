@@ -422,20 +422,23 @@ SecureRequestHandlerAPI::SecureRequestHandlerAPI(std::string data_path,
 
 bool SecureRequestHandlerAPI::get_response(const http::request<http::string_body> req, 
       http::response<http::string_body>& res) {
-   // Extract token from url
-   std::string url_string(req.target());
-   BOOST_LOG_TRIVIAL(debug) << "url_string: " << url_string << "\n";
-   std::regex token_regex ("token=(.+)$");
-   std::smatch sm;
-   std::regex_search(url_string, sm, token_regex);
-   std::string token;
 
-   BOOST_LOG_TRIVIAL(debug) << "sm.size(): " << sm.size() << "\n";
+  // Get token from header
+  std::string TOKEN("token");
+  std::string token(req.base()[TOKEN]);
+  BOOST_LOG_TRIVIAL(debug) << "IN HEADER token: " << token << "\n";
 
-   if (sm.size() >= 1) {
-      std::string match(sm[0]);
-      token = match.substr(6, std::string::npos); // 6 comes from the length of "token="
-   } else {
+   //// Extract token from url
+   //std::string url_string(req.target());
+   //BOOST_LOG_TRIVIAL(debug) << "url_string: " << url_string << "\n";
+   //std::regex token_regex ("token=(.+)$");
+   //std::smatch sm;
+   //std::regex_search(url_string, sm, token_regex);
+   //std::string token;
+   //
+   //BOOST_LOG_TRIVIAL(debug) << "sm.size(): " << sm.size() << "\n";
+   //
+   if (token == "") {
       res.version(11);
       res.result(http::status::unauthorized);
       res.set(http::field::content_type, "text/plain");
@@ -443,7 +446,6 @@ bool SecureRequestHandlerAPI::get_response(const http::request<http::string_body
       res.prepare_payload(); 
       return true;
    }
-   BOOST_LOG_TRIVIAL(debug) << "token: " << token << "\n";
 
   // Check if token is valid
   // If so, call base_request_handler
@@ -451,18 +453,18 @@ bool SecureRequestHandlerAPI::get_response(const http::request<http::string_body
   auth_level user_auth_level;
   user_auth_level = authorizer_->get_auth(token, user_id);
   if (user_auth_level == PRIVATE_AUTH) {
-      int token_start = url_string.find("?");
-      std::string new_target(url_string.substr(0, token_start));
+      //int token_start = url_string.find("?");
+      //std::string new_target(url_string.substr(0, token_start));
 
       // Create a new request to pass to the base handler
-      http::request<http::string_body> req2{req.method(), new_target, req.version()};
-      req2.body() = req.body();
+      //http::request<http::string_body> req2{req.method(), new_target, req.version()};
+      //req2.body() = req.body();
 
-      BOOST_LOG_TRIVIAL(debug) << "url_string.size(): " << url_string.size() << "\n";
-      BOOST_LOG_TRIVIAL(debug) << "token_start: " << token_start << "\n";
-      BOOST_LOG_TRIVIAL(debug) << "new target: " << url_string.substr(0, token_start) << "\n";
+      //BOOST_LOG_TRIVIAL(debug) << "url_string.size(): " << url_string.size() << "\n";
+      //BOOST_LOG_TRIVIAL(debug) << "token_start: " << token_start << "\n";
+      //BOOST_LOG_TRIVIAL(debug) << "new target: " << url_string.substr(0, token_start) << "\n";
 
-      bool return_val = base_request_handler->get_response(req2, res);
+      bool return_val = base_request_handler->get_response(req, res);
       return return_val;
   }
   else if (user_auth_level == PUBLIC_AUTH) {

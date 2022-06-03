@@ -1,5 +1,5 @@
 #!/bin/bash
-
+apt-get update && apt-get install -y wget
 url=https://www.googleapis.com/oauth2/v1/certs
 
 mkdir keys > /dev/null 2>&1 || true

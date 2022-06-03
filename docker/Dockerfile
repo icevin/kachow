@@ -20,6 +20,9 @@ FROM ubuntu:focal as deploy
 # Copy server output binary to "."
 COPY --from=builder /usr/src/project/build/bin/server .
 
+# Copy run.sh to "."
+COPY ./run.sh .
+
 # Copy config files
 COPY conf/* conf/
 
@@ -41,6 +44,7 @@ EXPOSE 80
 RUN mkdir keys > /dev/null 2>&1 || true
 
 # Update certificates
+RUN apt-get update && apt-get install -y wget
 RUN wget https://www.googleapis.com/oauth2/v1/certs -x -O ./keys/certs.json
 
 # Use ENTRYPOINT to specify the binary name

@@ -1,5 +1,6 @@
 #include "gtest/gtest.h"
 #include "request_handler.hh"
+#include "token_auth.hh"
 
 #include <iostream>
 #include <string>
@@ -75,6 +76,29 @@ class APITest:public::testing::Test {
       delete mock_id_map;
       delete fs;
       delete API_handler;
+    }
+
+    std::map<std::string, std::set<int>>* mock_id_map;
+    FileSystem* fs;
+};
+
+class SecureAPITest:public::testing::Test {
+  protected:
+    RequestHandler* API_handler;
+    Auth* authorizer;
+
+    void SetUp() override {
+      mock_id_map = new std::map<std::string, std::set<int>>;
+      fs = new FakeFileSsystem();
+      authorizer = new FakeAuth();
+      API_handler = new SecureRequestHandlerAPI(".", 0, mock_id_map, fs, authorizer);
+    }
+
+    void TearDown() override {
+      delete mock_id_map;
+      delete fs;
+      delete API_handler;
+      delete authorizer;
     }
 
     std::map<std::string, std::set<int>>* mock_id_map;
@@ -316,6 +340,162 @@ TEST_F(APITest, BadAPIRequestTest) {
   EXPECT_FALSE(status);
   EXPECT_EQ(res.result_int(), 400);
   EXPECT_EQ(res.body(), "<html><h1>400 Bad Request</h1></html>");
+}
+
+TEST_F(SecureAPITest, POSTSuccessTest) {
+  http::request<http::string_body> req(http::verb::post, "/test?token=PRIVAUTH1", 11);
+  http::response<http::string_body> res;
+
+  bool status = API_handler->get_response(req, res);
+
+  EXPECT_TRUE(status);
+  EXPECT_EQ(res.result_int(), 201);
+  EXPECT_EQ(res.body(), "{\"id\": 1}");
+}
+
+TEST_F(SecureAPITest, POSTFailTest) {
+  http::request<http::string_body> req(http::verb::post, "?token=PRIVAUTH1", 11);
+  http::response<http::string_body> res;
+  bool status = API_handler->get_response(req, res);
+
+  EXPECT_FALSE(status);
+  EXPECT_EQ(res.result_int(), 404);
+}
+
+TEST_F(SecureAPITest, POSTMultipleLevelTest) {
+  http::request<http::string_body> req(http::verb::post, "/test/next?token=PRIVAUTH1", 11);
+  http::response<http::string_body> res;
+  bool status = API_handler->get_response(req, res);
+
+  EXPECT_FALSE(status);
+  EXPECT_EQ(res.result_int(), 400);
+}
+
+TEST_F(SecureAPITest, GETPathNotFoundTest) {
+  http::request<http::string_body> req(http::verb::get, "/test/0?token=PRIVAUTH1", 11);
+  http::response<http::string_body> res;
+  bool status = API_handler->get_response(req, res);
+
+  EXPECT_FALSE(status);
+  EXPECT_EQ(res.result_int(), 404);
+}
+
+TEST_F(SecureAPITest, GETFileNotFoundTest) {
+  http::request<http::string_body> req(http::verb::get, "/test/1?token=PRIVAUTH1", 11);
+  http::response<http::string_body> res;
+  bool status = API_handler->get_response(req, res);
+
+  EXPECT_FALSE(status);
+  EXPECT_EQ(res.result_int(), 404);
+}
+
+TEST_F(SecureAPITest, GETSuccessTest) {
+  http::request<http::string_body> req_post(http::verb::post, "/test?token=PRIVAUTH1", 11);
+  http::response<http::string_body> res_post;
+  API_handler->get_response(req_post, res_post);
+
+  http::request<http::string_body> req(http::verb::get, "/test/1?token=PRIVAUTH1", 11);
+  http::response<http::string_body> res;
+  bool status = API_handler->get_response(req, res);
+
+  EXPECT_TRUE(status);
+  EXPECT_EQ(res.result_int(), 200);
+}
+
+TEST_F(SecureAPITest, GETSuccessTest2) {
+  http::request<http::string_body> req_post1(http::verb::post, "/test?token=PRIVAUTH1", 11);
+  http::response<http::string_body> res_post1;
+  API_handler->get_response(req_post1, res_post1);
+
+  http::request<http::string_body> req(http::verb::get, "/test/?token=PRIVAUTH1", 11);
+  http::response<http::string_body> res;
+  bool status = API_handler->get_response(req, res);
+
+  EXPECT_TRUE(status);
+  EXPECT_EQ(res.result_int(), 200);
+}
+
+TEST_F(SecureAPITest, PUTCreateTest) {
+  http::request<http::string_body> req(http::verb::put, "/test/1?token=PRIVAUTH1", 11);
+  http::response<http::string_body> res;
+  bool status = API_handler->get_response(req, res);
+
+  EXPECT_TRUE(status);
+  EXPECT_EQ(res.result_int(), 200);
+}
+
+TEST_F(SecureAPITest, PUTNotFoundTest) {
+  http::request<http::string_body> req(http::verb::put, "/test/test/1?token=PRIVAUTH1", 11);
+  http::response<http::string_body> res;
+  bool status = API_handler->get_response(req, res);
+
+  EXPECT_FALSE(status);
+  EXPECT_EQ(res.result_int(), 400);
+}
+
+TEST_F(SecureAPITest, PUTSuccessFoundTest) {
+  http::request<http::string_body> req_post(http::verb::post, "/test?token=PRIVAUTH1", 11);
+  http::response<http::string_body> res_post;
+  API_handler->get_response(req_post, res_post);
+
+  http::request<http::string_body> req(http::verb::put, "/test/1?token=PRIVAUTH1", 11);
+  http::response<http::string_body> res;
+  bool status = API_handler->get_response(req, res);
+
+  EXPECT_TRUE(status);
+  EXPECT_EQ(res.result_int(), 200);
+}
+
+TEST_F(SecureAPITest, DELETENotFoundTest) {
+  http::request<http::string_body> req(http::verb::delete_, "/test/1?token=PRIVAUTH1", 11);
+  http::response<http::string_body> res;
+  bool status = API_handler->get_response(req, res);
+
+  EXPECT_FALSE(status);
+  EXPECT_EQ(res.result_int(), 404);
+}
+
+TEST_F(SecureAPITest, DELETESuccessFoundTest) {
+  http::request<http::string_body> req_post(http::verb::post, "/test?token=PRIVAUTH1", 11);
+  http::response<http::string_body> res_post;
+  API_handler->get_response(req_post, res_post);
+
+  http::request<http::string_body> req(http::verb::delete_, "/test/1?token=PRIVAUTH1", 11);
+  http::response<http::string_body> res;
+  bool status = API_handler->get_response(req, res);
+
+  EXPECT_TRUE(status);
+  EXPECT_EQ(res.result_int(), 200);
+}
+
+TEST_F(SecureAPITest, NotAllowTest) {
+  http::request<http::string_body> req(http::verb::head, "/test?token=PRIVAUTH1", 11);
+  http::response<http::string_body> res;
+  bool status = API_handler->get_response(req, res);
+
+  EXPECT_FALSE(status);
+  EXPECT_EQ(res.result_int(), 405);
+  EXPECT_EQ(res.body(), "<html><h1>405 Not Allowed</h1></html>");
+}
+
+TEST_F(SecureAPITest, BadAPIRequestTest) {
+  http::request<http::string_body> req(http::verb::mkcalendar, "/test?token=PRIVAUTH1", 11);
+  http::response<http::string_body> res;
+  bool status = API_handler->get_response(req, res);
+
+  EXPECT_FALSE(status);
+  EXPECT_EQ(res.result_int(), 400);
+  EXPECT_EQ(res.body(), "<html><h1>400 Bad Request</h1></html>");
+}
+
+TEST_F(SecureAPITest, AuthFailTest) {
+  http::request<http::string_body> req(http::verb::post, "/test?token=BADTOKEN", 11);
+  http::response<http::string_body> res;
+
+  bool status = API_handler->get_response(req, res);
+
+  EXPECT_TRUE(status);
+  EXPECT_EQ(res.result_int(), 401);
 }
 
 TEST_F(LoginTest, Login404) {

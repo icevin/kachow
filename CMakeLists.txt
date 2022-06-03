@@ -69,7 +69,7 @@ add_executable(request_handler_test tests/request_handler_test.cc)
 target_link_libraries(request_handler_test request_handler_lib session_lib server_lib config_parser_lib request_handler_lib Boost::log Boost::filesystem Boost::system Boost::thread Threads::Threads gtest_main gcov)
 
 add_executable(token_auth_test tests/token_auth_test.cc)
-target_link_libraries(token_auth_test token_auth_lib OpenSSL::Crypto gtest_main gcov)
+target_link_libraries(token_auth_test token_auth_lib OpenSSL::Crypto gtest_main gcov Boost::log)
 
 # add_executable(example_lib_test tests/example_lib_test.cc)
 # target_link_libraries(example_lib_test example_lib gtest_main)

@@ -32,6 +32,9 @@ COPY login/* login/
 # Copy ssl directory
 COPY ssl/* ssl/
 
+# Copy keys directory
+COPY keys/* keys/
+
 # Expose some port(s)
 EXPOSE 80
 

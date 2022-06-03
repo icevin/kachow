@@ -15,13 +15,13 @@ class Auth {
 
 class TokenAuth : public Auth {
  public:
-  TokenAuth(std::string client_id, std::string client_secret) 
-    : client_id_(client_id), client_secret_{client_secret} {};
+  TokenAuth(std::string client_id, std::string public_key_path) 
+    : client_id_(client_id), public_key_path_{public_key_path} {};
   auth_level get_auth(std::string id_token, std::string& user_id);
   
  private:
   std::string client_id_;
-  std::string client_secret_;
+  std::string public_key_path_;
 };
 
 class FakeAuth : public Auth {
@@ -31,5 +31,5 @@ class FakeAuth : public Auth {
   
  private:
   std::string client_id_;
-  std::string client_secret_;
+  std::string public_key_path_;
 };

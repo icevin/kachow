@@ -112,15 +112,21 @@ void server::generate_routes(NginxConfig* config, FileSystem* fs) {
                         if (sub_statement->child_block_->statements_.size() < 2) {
                             BOOST_LOG_TRIVIAL(fatal) << "Incorrect arguments passed to SecureAPIHandler\n"
                                                        "Should be: root_file_path <path>;\n"
-                                                       "           auth_type <OAUTH/FAKE> (<client_id> <client_secret>)\n";
+                                                       "           auth_type <OAUTH/FAKE> (<client_id> <public_key_path>)\n";
                         }
                         std::string root_file_path = sub_statement->child_block_->statements_[0]->tokens_[1];
                         std::string auth_type_str = sub_statement->child_block_->statements_[1]->tokens_[1];
                         Auth* authorizer;
                         if (auth_type_str == "OAUTH") {
                             std::string client_id = sub_statement->child_block_->statements_[1]->tokens_[2];
-                            std::string client_secret = sub_statement->child_block_->statements_[1]->tokens_[3];
-                            authorizer = new TokenAuth(client_id, client_secret);
+                            std::string public_key_path = sub_statement->child_block_->statements_[1]->tokens_[3];
+                            const std::ifstream input_stream(public_key_path, std::ios_base::binary);
+
+                            if (input_stream.fail()) {
+                                BOOST_LOG_TRIVIAL(fatal) << "Invalid public_key_path provided";
+                            }
+
+                            authorizer = new TokenAuth(client_id, public_key_path);
                         } else if (auth_type_str == "FAKE") {
                             authorizer = new FakeAuth();
                         } else {

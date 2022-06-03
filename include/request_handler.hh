@@ -95,8 +95,10 @@ class SecureRequestHandlerAPI : public RequestHandler {
     std::string get_name() {return "SecureAPI";};
 
   private:
-    RequestHandler* base_request_handler;
+    RequestHandler* base_request_handler_priv;
+    RequestHandler* base_request_handler_pub;
     Auth* authorizer_;
+    int prefix_length_;
 };
 
 class RequestHandlerSleep : public RequestHandler {

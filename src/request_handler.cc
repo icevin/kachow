@@ -416,7 +416,21 @@ bool RequestHandlerAPI::parse_url_target(const http::request<http::string_body> 
 
 SecureRequestHandlerAPI::SecureRequestHandlerAPI(std::string data_path, 
       int prefix_length, std::map<std::string, std::set<int>>* entity_id_map, FileSystem* fs, Auth* authorizer) {
-  base_request_handler = new RequestHandlerAPI(data_path, prefix_length, entity_id_map, fs);
+  prefix_length_ = prefix_length;
+
+  // We create separate base handlers for public and private users here because we want
+  // their data to be stored in separate directories. Otherwise public users would be
+  // able to access the data of private users
+  boost::filesystem::path priv_path(data_path + "/priv");
+  if (!fs->exists(priv_path)) {
+      fs->create_directory(priv_path);
+  }
+  base_request_handler_priv = new RequestHandlerAPI(data_path + "/priv", prefix_length, entity_id_map, fs);
+  boost::filesystem::path pub_path(data_path + "/pub");
+  if (!fs->exists(pub_path)) {
+      fs->create_directory(pub_path);
+  }
+  base_request_handler_pub = new RequestHandlerAPI(data_path + "/pub", prefix_length, entity_id_map, fs);
   authorizer_ = authorizer;
 }
 
@@ -424,8 +438,14 @@ bool SecureRequestHandlerAPI::get_response(const http::request<http::string_body
       http::response<http::string_body>& res) {
 
   // Get token from header
-  std::string TOKEN("token");
-  std::string token(req.base()[TOKEN]);
+  std::string AUTHORIZATION("Authorization");
+  std::string auth_field(req.base()[AUTHORIZATION]);
+  std::string token; 
+  if (auth_field.length() > 7) {
+    token = auth_field.substr(7); // Removes the string "Bearer " from the Authorization field
+  } else {
+    token = "";
+  }
   BOOST_LOG_TRIVIAL(debug) << "IN HEADER token: " << token << "\n";
 
    //// Extract token from url
@@ -448,32 +468,34 @@ bool SecureRequestHandlerAPI::get_response(const http::request<http::string_body
    }
 
   // Check if token is valid
-  // If so, call base_request_handler
   std::string user_id;
   auth_level user_auth_level;
   user_auth_level = authorizer_->get_auth(token, user_id);
   if (user_auth_level == PRIVATE_AUTH) {
-      //int token_start = url_string.find("?");
-      //std::string new_target(url_string.substr(0, token_start));
 
-      // Create a new request to pass to the base handler
-      //http::request<http::string_body> req2{req.method(), new_target, req.version()};
-      //req2.body() = req.body();
+      std::string url_string(req.target());
+      if (url_string.length() <= prefix_length_+1)
+      {
+        // 404 Case
+        bool return_val = base_request_handler_priv->get_response(req, res);
+        return return_val;
+      }
 
-      //BOOST_LOG_TRIVIAL(debug) << "url_string.size(): " << url_string.size() << "\n";
-      //BOOST_LOG_TRIVIAL(debug) << "token_start: " << token_start << "\n";
-      //BOOST_LOG_TRIVIAL(debug) << "new target: " << url_string.substr(0, token_start) << "\n";
+      // If .g.ucla user, call add user_id_ to the namespace
+      BOOST_LOG_TRIVIAL(debug) << "old_url_string: " << url_string << "\n";
+      BOOST_LOG_TRIVIAL(debug) << "prefix_length_: " << prefix_length_ << "\n";
+      std::string new_target(url_string.substr(0, prefix_length_+1) + user_id + "_" + url_string.substr(prefix_length_+1));
+      BOOST_LOG_TRIVIAL(debug) << "new_target: " << new_target << "\n";
 
-      bool return_val = base_request_handler->get_response(req, res);
+      http::request<http::string_body> req2{req.method(), new_target, req.version()};
+      req2.body() = req.body();
+
+      bool return_val = base_request_handler_priv->get_response(req2, res);
       return return_val;
   }
   else if (user_auth_level == PUBLIC_AUTH) {
-      res.version(11);
-      res.result(http::status::unauthorized);
-      res.set(http::field::content_type, "text/plain");
-      res.body() = "Only .g.ucla users are permitted";
-      res.prepare_payload(); 
-      return true;
+      bool return_val = base_request_handler_pub->get_response(req, res);
+      return return_val;
   }
   else {
       res.version(11);

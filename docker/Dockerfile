@@ -22,6 +22,7 @@ COPY --from=builder /usr/src/project/build/bin/server .
 
 # Copy run.sh to "."
 COPY ./run.sh .
+COPY ./update.sh .
 
 # Copy config files
 COPY conf/* conf/

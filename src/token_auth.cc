@@ -33,13 +33,19 @@ auth_level TokenAuth::get_auth(std::string id_token, std::string& user_id) {
         auto cert_list = jwt::details::map_of_claims<jwt::traits::kazuho_picojson>::parse_claims(pem);
         auto cert      = cert_list[decoded_token.get_key_id()];
 
-        // extract key from certificate
-        std::string key = jwt::helper::extract_pubkey_from_cert(jwt::traits::kazuho_picojson::as_string(cert));
 
         auto issuer = decoded_token.get_issuer();
         // precheck on issuer
         if (issuer.empty()) {
             return NO_AUTH;
+        }
+
+        std::string key;
+        if (issuer != "https://accounts.google.com") {
+          key = jwt::traits::kazuho_picojson::as_string(cert);
+        } else {
+          // extract key from certificate
+          key = jwt::helper::extract_pubkey_from_cert(jwt::traits::kazuho_picojson::as_string(cert));
         }
 
         // check token audience
@@ -52,10 +58,10 @@ auth_level TokenAuth::get_auth(std::string id_token, std::string& user_id) {
         auto verifier =
             jwt::verify()
                 .allow_algorithm(jwt::algorithm::rs256(key, "", "", ""))  // rsa 256 algo
-                .with_issuer("https://accounts.google.com");               // enforce correct issuer
+                .with_issuer(issuer_); // enforce correct issuer
 
         verifier.verify(decoded_token);
-
+        
         // get user id
         user_id = decoded_token.get_subject();
 
@@ -71,7 +77,7 @@ auth_level TokenAuth::get_auth(std::string id_token, std::string& user_id) {
         }
     } catch (std::exception& e) {
         // verifier throws exeption if token signature is invalid
-        BOOST_LOG_TRIVIAL(debug) << "Invalid token signature";
+        BOOST_LOG_TRIVIAL(debug) << "Invalid token signature: " << e.what();
         return NO_AUTH;
     }
 }

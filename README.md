@@ -1,4 +1,7 @@
 # Kachow
+UCLA CS130 Course Project, Spring 2022
+Web Server w/ HTTPS & OAuth support
+
 ## Code Layout
 ### cmake/
 - CodeCoverageReportConfig.cmake
